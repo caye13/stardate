@@ -12,7 +12,6 @@ export default function TestPage() {
   return (
     <>
       <EntryForm transcription={transcription} isEditable={!isRecording} />
-      <AudioRecorder setTranscription={setTranscription} setIsRecording={setIsRecording} />
     </>
   )
 }

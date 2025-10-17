@@ -4,11 +4,12 @@ import { useState, useRef, useEffect } from 'react'
 import { api } from '@/lib/trpc/client'
 
 interface AudioRecorderProps {
-  setTranscription: React.Dispatch<React.SetStateAction<string>>
   setIsRecording: React.Dispatch<React.SetStateAction<boolean>>
+  entryType: string
+  department?: string
 }
 
-export default function AudioRecorder({ setTranscription, setIsRecording: setExternalIsRecording }: AudioRecorderProps) {
+export default function AudioRecorder({ setIsRecording: setExternalIsRecording, entryType: entryType, department: department }: AudioRecorderProps) {
   const [isRecording, setIsRecording] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [audioLevels, setAudioLevels] = useState<number[]>(new Array(20).fill(0))
@@ -19,7 +20,20 @@ export default function AudioRecorder({ setTranscription, setIsRecording: setExt
   const audioContextRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
   const animationRef = useRef<number | null>(null)
+  const communicatorBeepRef = useRef<HTMLAudioElement | null>(null)
 
+  const playAudio = () => {
+    // If the audio element doesn't exist yet, create it
+    if (!communicatorBeepRef.current) {
+      communicatorBeepRef.current = new Audio('/communicatorbeep.mp3') // Put your MP3 in public folder
+    }
+
+    // Reset to start and play
+    communicatorBeepRef.current.currentTime = 1
+    communicatorBeepRef.current.play().catch(error => {
+      console.error('Error playing audio:', error)
+    })
+  }
   const transcribeMutation = api.audio.transcribeBuffer.useMutation({
     onSuccess: (data) => {
       console.log('Transcription:', data)
@@ -28,8 +42,6 @@ export default function AudioRecorder({ setTranscription, setIsRecording: setExt
       const newText = data.text
       setInternalTranscription(prev => prev + (prev ? ' ' : '') + newText)
 
-      // Update parent component's transcription
-      setTranscription(prev => prev + (prev ? ' ' : '') + newText)
 
       // Set external recording state to false when done
       setExternalIsRecording(false)
@@ -51,6 +63,7 @@ export default function AudioRecorder({ setTranscription, setIsRecording: setExt
 
   const startRecording = async () => {
     try {
+      playAudio()
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       const mediaRecorder = new MediaRecorder(stream)
       mediaRecorderRef.current = mediaRecorder
@@ -147,6 +160,8 @@ export default function AudioRecorder({ setTranscription, setIsRecording: setExt
       transcribeMutation.mutate({
         audioData: base64Data,
         fileName: `recording-${Date.now()}.webm`,
+        entryType: entryType,
+        department: department
       })
     }
   }
@@ -165,7 +180,7 @@ export default function AudioRecorder({ setTranscription, setIsRecording: setExt
   return (
     <div
       onClick={!isRecording ? toggleRecordingOn : () => { }}
-      className={`flex items-center bg-white/5 backdrop-blur-sm px-3 py-3 ${!isRecording ? 'cursor-pointer items-center justify-center w-14 h-14' : 'min-w-8 min-h-8'} rounded-full transition-all border border-gray-500/26 shadow-md shadow-gray-800/50`}
+      className={`flex items-center bg-white/26 backdrop-blur-sm px-3 py-3 ${!isRecording ? 'cursor-pointer items-center justify-center w-14 h-14' : 'min-w-8 min-h-8'} rounded-full transition-all border border-gray-500/26 shadow-xl shadow-gray-800/50`}
     >
       {!isRecording && (
         <span className="" onClick={toggleRecordingOn}>🎙️</span>
@@ -173,11 +188,11 @@ export default function AudioRecorder({ setTranscription, setIsRecording: setExt
       <button
         disabled={!isRecording}
         onClick={isPaused ? resumeRecording : pauseRecording}
-        className={`text-white overflow-hidden transition-all duration-500 ease-in-out ${isRecording ? 'w-full' : 'w-0'} hover:text-gray-300 h-8 flex items-center justify-center`}
+        className={`text-white overflow-hidden transition-all duration-500 ease-in-out ${isRecording ? 'cursor-pointer w-full' : 'w-0 opacity-0'} hover:text-gray-300 h-8 flex items-center justify-center`}
       >
         {isPaused ? '▶️' : '⏸️'}
       </button>
-      <div className={`flex transition-all duration-500 ${isRecording ? 'w-full p-4' : 'w-0 overflow-hidden'} items-center gap-1 h-8`}>
+      <div className={`flex transition-all duration-500 ${isRecording ? 'w-full p-4' : 'w-0'} items-center gap-1 h-8`}>
         {audioLevels.map((level, i) => (
           <div
             key={i}
@@ -192,7 +207,7 @@ export default function AudioRecorder({ setTranscription, setIsRecording: setExt
       <button
         disabled={!isRecording}
         onClick={stopRecording}
-        className={`text-white overflow-hidden transition-all duration-500 ease-in-out ${isRecording ? 'w-full' : 'w-0'} hover:text-gray-300 h-8 flex items-center justify-center`}
+        className={`text-white overflow-hidden transition-all duration-500 ease-in-out ${isRecording ? 'cursor-pointer w-full' : 'w-0 opacity-0'} hover:text-gray-300 h-8 flex items-center justify-center`}
       >
         ⏹️
       </button>

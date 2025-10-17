@@ -1,6 +1,6 @@
 'use client'
 import { api } from '@/lib/trpc/client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { FaMicrophone, FaTimes, FaSignOutAlt } from 'react-icons/fa'
 import Link from 'next/link'
@@ -13,7 +13,6 @@ export default function Home() {
   const [content, setContent] = useState('')
   const [activeTab, setActiveTab] = useState('Personal Logs')
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [transcription, setTranscription] = useState('')
   const [isRecording, setIsRecording] = useState(false)
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
   const [isSliding, setIsSliding] = useState(false)
@@ -22,7 +21,7 @@ export default function Home() {
 
   const supabase = createClient()
   const utils = api.useUtils()
-  const { data: userData } = api.auth.getUser.useQuery()
+  const { data: userData, isLoading } = api.auth.getUser.useQuery()
 
   const signUp = api.auth.signUp.useMutation({
     onSuccess: async () => {
@@ -83,6 +82,12 @@ export default function Home() {
       setIsSliding(false)
     }, 500)
   }
+
+  useEffect(() => {
+    if (!isRecording) {
+      utils.journal.list.invalidate()
+    }
+  }, [isRecording])
 
   // --- STYLE COMPONENT ---
   const Style = () => (
@@ -164,14 +169,14 @@ export default function Home() {
         background: rgba(255, 255, 255, 0.25);
         backdrop-filter: blur(15px);
         -webkit-backdrop-filter: blur(15px);
-        border: 1px solid rgba(255, 255, 255, 0.4);
+        border: 1px solid rgba(10, 48, 36, 0.13);
         box-shadow: 0 4px 16px 0 rgba(2, 48, 32, 0.05);
         transition: all 0.3s ease;
     }
     
     .entry-glass:hover {
         background: rgba(255, 255, 255, 0.75);
-        border: 1px solid rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(10, 48, 36, 0.3);
         box-shadow: 0 8px 32px 0 rgba(2, 48, 32, 0.15);
         transform: translateY(-2px);
     }
@@ -284,6 +289,30 @@ export default function Home() {
 `}</style>
   );
 
+  // --- LOADING VIEW ---
+  if (isLoading) {
+    return (
+      <>
+        <Style />
+        <div className="min-h-screen w-full flex items-center justify-center">
+          <div className="background-shape shape1"></div>
+          <div className="background-shape shape2"></div>
+          <div className="background-shape shape3"></div>
+
+          {/* You can add a gif here */}
+          <div className="text-center relative z-10">
+            {/* <img */}
+            {/*   src="/loading.gif" */}
+            {/*   alt="Loading..." */}
+            {/*   className="w-32 h-32 mx-auto mb-4" */}
+            {/* /> */}
+            <p className="font-bold text-2xl">To boldly go where no one has gone before</p>
+          </div>
+        </div>
+      </>
+    )
+  }
+
   // --- LOGIN/SIGNUP VIEW ---
   if (!userData?.user) {
     return (
@@ -323,7 +352,7 @@ export default function Home() {
             <Link href="/">
               <button
                 className="px-4 py-2 rounded-full text-sm font-medium glass-button-active transition-all"
-                style={{color: '#023020'}}
+                style={{ color: '#023020' }}
               >
                 Personal Logs
               </button>
@@ -331,7 +360,7 @@ export default function Home() {
             <Link href="/officers-log">
               <button
                 className="px-4 py-2 rounded-full text-sm font-medium glass-button transition-all"
-                style={{color: '#4b5563'}}
+                style={{ color: '#4b5563' }}
               >
                 Officers Logs
               </button>
@@ -339,7 +368,7 @@ export default function Home() {
             <Link href="/tasks">
               <button
                 className="px-4 py-2 rounded-full text-sm font-medium glass-button transition-all"
-                style={{color: '#4b5563'}}
+                style={{ color: '#4b5563' }}
               >
                 Tasks
               </button>
@@ -360,7 +389,7 @@ export default function Home() {
         <div className="flex h-screen pt-24">
           {/* Left Side - Entry List */}
           <div className={`${selectedEntryId ? 'w-1/2' : 'w-full max-w-xl mx-auto'} list-expand overflow-y-auto p-6 pb-28`}>
-            <div className="space-y-3 relative z-10">
+            <div className="space-y-1 relative z-10">
               {entries?.map((entry, index) => (
                 <div
                   key={entry.id}
@@ -369,12 +398,13 @@ export default function Home() {
                 >
                   <button
                     onClick={() => handleEntryClick(entry.id)}
-                    className={`w-full text-left px-6 py-4 rounded-full transition-all ${selectedEntryId === entry.id ? 'entry-glass-selected' : 'entry-glass'
+                    className={`w-full text-left px-3 py-2 rounded-md transition-all ${selectedEntryId === entry.id ? 'entry-glass-selected' : 'entry-glass'
                       }`}
                   >
                     <h3 className="text-base font-semibold" style={{ color: '#023020' }}>
                       {formatStardate(entry.createdAt)}
                     </h3>
+                    <p className='text-xs w-full overflow-hidden line-clamp-1'>{entry.content.substring(0, 100)}</p>
                   </button>
                 </div>
               ))}
@@ -424,7 +454,7 @@ export default function Home() {
 
         {/* Centered Floating Action Button */}
         <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
-          <AudioRecorder setTranscription={setTranscription} setIsRecording={setIsRecording} />
+          <AudioRecorder setIsRecording={setIsRecording} entryType={"personal"} />
         </div>
 
         {/* New Entry Modal */}
