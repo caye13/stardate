@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { router, protectedProcedure } from '../trpc'
 import { AssemblyAI } from 'assemblyai'
 import { journalRouter } from './journal'
+import { runKaizenAnalysisLogic } from '../services/analysis'
 
 const client = new AssemblyAI({
   apiKey: process.env.ASSEMBLYAI_API_KEY!,
@@ -79,6 +80,11 @@ export const audioRouter = router({
             data: { content: transcript.text || "No audio detected." }
           })
         } else if (input.entryType === "officer") {
+          // 2. Trigger the Kaizen analysis after the entry is updated
+          console.log("Officer entry updated, triggering Kaizen analysis...");
+          runKaizenAnalysisLogic(ctx).catch(error => {
+            console.error("Background Kaizen analysis failed:", error);
+          });
           await ctx.prisma.officerEntry.update({
             where: { id: entry.id },
             data: { content: transcript.text || "No audio detected." }
@@ -86,8 +92,6 @@ export const audioRouter = router({
 
         }
       }
-
-
 
       return {
         id: transcript.id,

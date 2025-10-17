@@ -8,6 +8,17 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 
 const departments = ['Engineering', 'Medical', 'Operations', 'Security', 'Command', 'Sciences']
+// const getDepartmentColor = (dept: string) => {
+//     const colors: Record<string, string> = {
+//       'Engineering': '#FFD700',
+//       'Command': '#FF6B6B',
+//       'Operations': '#FFA500',
+//       'Sciences': '#4169E1',
+//       'Medical': '#00CED1',
+//       'Security': '#DC143C'
+//     }
+//     return colors[dept] || '#023020'
+//   }
 const getDepartmentColor = (department: string) => {
   const colors: Record<string, string> = {
     'Engineering': 'bg-red-200 text-red-800 border-red-300',
@@ -46,10 +57,6 @@ export default function OfficersLog() {
     },
   })
 
-  const { data: entries } = api.officer.list.useQuery(undefined, {
-    enabled: !!userData?.user,
-  })
-
   const createEntry = api.officer.create.useMutation({
     onSuccess: () => {
       utils.officer.list.invalidate()
@@ -72,6 +79,14 @@ export default function OfficersLog() {
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     utils.auth.getUser.invalidate()
+  }
+
+  const { data: entries } = api.officer.list.useQuery(undefined, {
+    enabled: !!userData?.user,
+  })
+
+  const getUsernameFromEmail = (email: string) => {
+    return email.split('@')[0]
   }
 
   const formatStardate = (dateString: string | Date) => {
@@ -134,6 +149,14 @@ export default function OfficersLog() {
         color: #1f2937;
         overflow-x: hidden;
     }
+      //   .department-tag {
+      //   display: inline-block;
+      //   padding: 4px 8px;
+      //   border-radius: 16px;
+      //   font-size: 12px;
+      //   font-weight: 500;
+      //   margin-bottom: 8px;
+      // }
 
     /* Green background shapes (when no custom background) */
     .background-shape {
@@ -476,12 +499,13 @@ export default function OfficersLog() {
                   >
                     <div className="flex items-center justify-between gap-2 mb-1">
                       <h3 className="text-base font-semibold" style={{ color: '#023020' }}>
-                        {formatStardate(entry.createdAt)}
+                        {getUsernameFromEmail(entry.user.email)}
                       </h3>
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getDepartmentColor(entry.department)}`}>
                         {entry.department}
                       </span>
                     </div>
+                    <p className='text-xs text-gray-500'>{formatStardate(entry.createdAt)}</p>
                     <p className='text-xs w-full overflow-hidden line-clamp-1'>{entry.content.substring(0, 100)}</p>
                   </button>
                 </div>
@@ -505,6 +529,9 @@ export default function OfficersLog() {
                 </button>
 
                 <div className="glass-card p-8 rounded-2xl">
+                  <span className={` absolute top-4 right-4 px-2 py-1 rounded-full text-sm font-medium border ${getDepartmentColor(selectedEntry.department)}`}>
+                        {selectedEntry.department}
+                  </span>
                   <h2 className="text-2xl font-bold mb-2" style={{ color: '#023020' }}>
                     {formatStardate(selectedEntry.createdAt)}
                   </h2>
