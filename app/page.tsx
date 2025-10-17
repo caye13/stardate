@@ -21,7 +21,7 @@ export default function Home() {
 
   const supabase = createClient()
   const utils = api.useUtils()
-  const { data: userData } = api.auth.getUser.useQuery()
+  const { data: userData, isLoading } = api.auth.getUser.useQuery()
 
   const signUp = api.auth.signUp.useMutation({
     onSuccess: async () => {
@@ -289,6 +289,29 @@ export default function Home() {
 `}</style>
   );
 
+  // --- LOADING VIEW ---
+  if (isLoading) {
+    return (
+      <>
+        <Style />
+        <div className="min-h-screen w-full flex items-center justify-center">
+          <div className="background-shape shape1"></div>
+          <div className="background-shape shape2"></div>
+          <div className="background-shape shape3"></div>
+
+          {/* You can add a gif here */}
+          <div className="text-center relative z-10">
+            <img
+              src="/loading.gif"
+              alt="Loading..."
+              className="w-32 h-32 mx-auto mb-4"
+            />
+          </div>
+        </div>
+      </>
+    )
+  }
+
   // --- LOGIN/SIGNUP VIEW ---
   if (!userData?.user) {
     return (
@@ -429,7 +452,7 @@ export default function Home() {
 
         {/* Centered Floating Action Button */}
         <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
-          <AudioRecorder setIsRecording={setIsRecording} />
+          <AudioRecorder setIsRecording={setIsRecording} entryType={"personal"} />
         </div>
 
         {/* New Entry Modal */}

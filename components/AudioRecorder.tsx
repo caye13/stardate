@@ -5,9 +5,11 @@ import { api } from '@/lib/trpc/client'
 
 interface AudioRecorderProps {
   setIsRecording: React.Dispatch<React.SetStateAction<boolean>>
+  entryType: string
+  department?: string
 }
 
-export default function AudioRecorder({ setIsRecording: setExternalIsRecording }: AudioRecorderProps) {
+export default function AudioRecorder({ setIsRecording: setExternalIsRecording, entryType: entryType, department: department }: AudioRecorderProps) {
   const [isRecording, setIsRecording] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [audioLevels, setAudioLevels] = useState<number[]>(new Array(20).fill(0))
@@ -144,6 +146,8 @@ export default function AudioRecorder({ setIsRecording: setExternalIsRecording }
       transcribeMutation.mutate({
         audioData: base64Data,
         fileName: `recording-${Date.now()}.webm`,
+        entryType: entryType,
+        department: department
       })
     }
   }

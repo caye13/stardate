@@ -29,8 +29,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <BackgroundImageManager />
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+        <BackgroundImageManager>
+          <TRPCReactProvider>{children}</TRPCReactProvider>
+        </BackgroundImageManager>
       </body>
     </html>
   );

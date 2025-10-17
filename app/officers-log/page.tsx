@@ -1,6 +1,6 @@
 'use client'
 import { api } from '@/lib/trpc/client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { FaMicrophone, FaTimes, FaSignOutAlt } from 'react-icons/fa'
 import AudioRecorder from '@/components/AudioRecorder'
@@ -30,7 +30,7 @@ export default function OfficersLog() {
 
   const supabase = createClient()
   const utils = api.useUtils()
-  const { data: userData } = api.auth.getUser.useQuery()
+  const { data: userData, isLoading } = api.auth.getUser.useQuery()
 
   const signUp = api.auth.signUp.useMutation({
     onSuccess: async () => {
@@ -66,7 +66,7 @@ export default function OfficersLog() {
     await supabase.auth.signOut()
     utils.auth.getUser.invalidate()
   }
-  
+
   const formatStardate = (dateString: string | Date) => {
     const date = new Date(dateString)
     const year = date.getFullYear()
@@ -91,10 +91,15 @@ export default function OfficersLog() {
       setIsSliding(false)
     }, 500)
   }
+  useEffect(() => {
+    if (!isRecording) {
+      utils.officer.list.invalidate()
+    }
+  }, [isRecording])
 
-// --- STYLE COMPONENT ---
-const Style = () => (
-<style>{`
+  // --- STYLE COMPONENT ---
+  const Style = () => (
+    <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
     
     body, #__next {
@@ -290,7 +295,7 @@ const Style = () => (
     }
 
 `}</style>
-);
+  );
 
   // --- LOGIN/SIGNUP VIEW ---
   if (!userData?.user) {
@@ -298,18 +303,18 @@ const Style = () => (
       <>
         <Style />
         <div className="min-h-screen w-full flex items-center justify-center p-4">
-            <div className="background-shape shape1"></div>
-            <div className="background-shape shape2"></div>
-            <div className="w-full max-w-md p-8 space-y-6 rounded-2xl glass-card relative z-10">
-                <h1 className="text-4xl font-bold text-center" style={{color: '#023020'}}>Stardate</h1>
-                <p className="text-center text-gray-600">Log your journey, one entry at a time.</p>
-                <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 rounded-lg styled-input"/>
-                <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-lg styled-input"/>
-                <div className="flex flex-col sm:flex-row gap-4 pt-2">
-                    <button onClick={() => signUp.mutate({ email, password })} className="flex-1 py-3 rounded-lg primary-button">Sign Up</button>
-                    <button onClick={handleSignIn} className="flex-1 py-3 rounded-lg primary-button">Sign In</button>
-                </div>
+          <div className="background-shape shape1"></div>
+          <div className="background-shape shape2"></div>
+          <div className="w-full max-w-md p-8 space-y-6 rounded-2xl glass-card relative z-10">
+            <h1 className="text-4xl font-bold text-center" style={{ color: '#023020' }}>Stardate</h1>
+            <p className="text-center text-gray-600">Log your journey, one entry at a time.</p>
+            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 rounded-lg styled-input" />
+            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-lg styled-input" />
+            <div className="flex flex-col sm:flex-row gap-4 pt-2">
+              <button onClick={() => signUp.mutate({ email, password })} className="flex-1 py-3 rounded-lg primary-button">Sign Up</button>
+              <button onClick={handleSignIn} className="flex-1 py-3 rounded-lg primary-button">Sign In</button>
             </div>
+          </div>
         </div>
       </>
     )
@@ -323,50 +328,47 @@ const Style = () => (
         <div className="background-shape shape1"></div>
         <div className="background-shape shape2"></div>
         <div className="background-shape shape3"></div>
-        
+
         {/* Top Navigation Bar */}
         <header className="fixed top-0 left-0 right-0 z-50 p-4">
           <div className="max-w-max mx-auto flex items-center gap-2 px-2 py-2 rounded-full glossy-nav">
             {/* Navigation Tabs */}
             <Link href="/">
-                <button
-                  className={`px-4 py-2 rounded-full text-sm font-medium glass-button transition-all ${
-                    activeTab === 'personal-logs' ? 'glass-button-active' : ''
+              <button
+                className={`px-4 py-2 rounded-full text-sm font-medium glass-button transition-all ${activeTab === 'personal-logs' ? 'glass-button-active' : ''
                   }`}
-                  style={{color: activeTab === 'personal-logs' ? '#023020' : '#4b5563'}}
-                  onClick={() => setActiveTab('personal-logs')}
-                >
-                  Personal Logs
-                </button>
-              </Link>
-              <Link href="/officers-log">
-                <button
-                  className={`px-4 py-2 rounded-full text-sm font-medium glass-button transition-all ${
-                    activeTab === 'officers-log' ? 'glass-button-active' : ''
+                style={{ color: activeTab === 'personal-logs' ? '#023020' : '#4b5563' }}
+                onClick={() => setActiveTab('personal-logs')}
+              >
+                Personal Logs
+              </button>
+            </Link>
+            <Link href="/officers-log">
+              <button
+                className={`px-4 py-2 rounded-full text-sm font-medium glass-button transition-all ${activeTab === 'officers-log' ? 'glass-button-active' : ''
                   }`}
-                  style={{color: activeTab === 'officers-log' ? '#023020' : '#4b5563'}}
-                  onClick={() => setActiveTab('officers-log')}
-                >
-                  Officers Logs
-                </button>
-              </Link>
-              <Link href="/tasks">
-                <button
-                  className={`px-4 py-2 rounded-full text-sm font-medium glass-button transition-all ${
-                    activeTab === 'tasks' ? 'glass-button-active' : ''
+                style={{ color: activeTab === 'officers-log' ? '#023020' : '#4b5563' }}
+                onClick={() => setActiveTab('officers-log')}
+              >
+                Officers Logs
+              </button>
+            </Link>
+            <Link href="/tasks">
+              <button
+                className={`px-4 py-2 rounded-full text-sm font-medium glass-button transition-all ${activeTab === 'tasks' ? 'glass-button-active' : ''
                   }`}
-                  style={{color: activeTab === 'tasks' ? '#023020' : '#4b5563'}}
-                  onClick={() => setActiveTab('tasks')}
-                >
-                  Tasks
-                </button>
-              </Link>
+                style={{ color: activeTab === 'tasks' ? '#023020' : '#4b5563' }}
+                onClick={() => setActiveTab('tasks')}
+              >
+                Tasks
+              </button>
+            </Link>
 
             {/* Sign Out Button */}
             <button
               onClick={handleSignOut}
               className="px-4 py-2 rounded-full text-sm font-medium glass-button transition-all"
-              style={{color: '#4f634b'}}
+              style={{ color: '#4f634b' }}
             >
               Sign Out
             </button>
@@ -376,7 +378,7 @@ const Style = () => (
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
                 className="px-4 py-2 rounded-full text-sm font-medium glass-button transition-all appearance-none pr-8"
-                style={{color: '#4f634b'}}
+                style={{ color: '#4f634b' }}
               >
                 {departments.map((dept) => (
                   <option key={dept} value={dept}>
@@ -385,7 +387,7 @@ const Style = () => (
                 ))}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
               </div>
             </div>
           </div>
@@ -404,11 +406,10 @@ const Style = () => (
                 >
                   <button
                     onClick={() => handleEntryClick(entry.id)}
-                    className={`w-full text-left px-6 py-4 rounded-full transition-all ${
-                      selectedEntryId === entry.id ? 'entry-glass-selected' : 'entry-glass'
-                    }`}
+                    className={`w-full text-left px-6 py-4 rounded-full transition-all ${selectedEntryId === entry.id ? 'entry-glass-selected' : 'entry-glass'
+                      }`}
                   >
-                    <h3 className="text-base font-semibold" style={{color: '#023020'}}>
+                    <h3 className="text-base font-semibold" style={{ color: '#023020' }}>
                       {formatStardate(entry.createdAt)}
                     </h3>
                   </button>
@@ -418,7 +419,7 @@ const Style = () => (
           </div>
 
           {/* Divider */}
-          {selectedEntryId && <div className="split-divider" style={{opacity: slideDirection === 'out' ? 0 : 1, transition: 'opacity 0.5s'}}></div>}
+          {selectedEntryId && <div className="split-divider" style={{ opacity: slideDirection === 'out' ? 0 : 1, transition: 'opacity 0.5s' }}></div>}
 
           {/* Right Side - Expanded Entry View */}
           {(selectedEntryId || isSliding) && selectedEntry && (
@@ -427,13 +428,13 @@ const Style = () => (
                 <button
                   onClick={handleBackClick}
                   className="mb-6 px-4 py-2 rounded-lg glass-button text-sm font-medium"
-                  style={{color: '#023020'}}
+                  style={{ color: '#023020' }}
                 >
                   ← Back to List
                 </button>
-                
+
                 <div className="glass-card p-8 rounded-2xl">
-                  <h2 className="text-2xl font-bold mb-2" style={{color: '#023020'}}>
+                  <h2 className="text-2xl font-bold mb-2" style={{ color: '#023020' }}>
                     {formatStardate(selectedEntry.createdAt)}
                   </h2>
                   <h3 className="text-3xl font-bold text-gray-800 mb-6">
@@ -474,7 +475,7 @@ const Style = () => (
               >
                 <FaTimes size={20} />
               </button>
-              <h2 className="text-2xl font-semibold mb-4" style={{color: '#023020'}}>
+              <h2 className="text-2xl font-semibold mb-4" style={{ color: '#023020' }}>
                 New Stardate Entry
               </h2>
               <input
@@ -492,19 +493,19 @@ const Style = () => (
                 className="w-full px-4 py-3 mb-4 rounded-lg styled-textarea"
               />
               <button
-                onClick={() => createEntry.mutate({ title, content })}
+                onClick={() => createEntry.mutate({ title, content, department })}
                 disabled={!title || !content}
                 className="w-full py-3 rounded-lg primary-button"
               >
                 Create Entry
               </button>
-              
+
             </div>
           </div>
         )}
       </div>
       <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
-                <AudioRecorder setTranscription={setTranscription} setIsRecording={setIsRecording} />
+        <AudioRecorder setIsRecording={setIsRecording} entryType="officer" department={department} />
       </div>
     </>
   )
