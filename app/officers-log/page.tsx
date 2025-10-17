@@ -12,6 +12,18 @@ import Link from 'next/link'
 
 const departments = ['Engineering', 'Medical', 'Operations', 'Security', 'Command', 'Sciences']
 
+const getDepartmentColor = (dept: string) => {
+    const colors: Record<string, string> = {
+      'Engineering': '#FFD700',
+      'Command': '#FF6B6B',
+      'Operations': '#FFA500',
+      'Sciences': '#4169E1',
+      'Medical': '#00CED1',
+      'Security': '#DC143C'
+    }
+    return colors[dept] || '#023020'
+  }
+
 
 export default function OfficersLog() {
   const [email, setEmail] = useState('')
@@ -104,6 +116,14 @@ const Style = () => (
         overflow-x: hidden;
     }
 
+    .department-tag {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 500;
+        margin-bottom: 8px;
+      }
 
 
     /* Green background shapes (when no custom background) */
@@ -433,6 +453,16 @@ const Style = () => (
                 </button>
                 
                 <div className="glass-card p-8 rounded-2xl">
+                  <span 
+                    className="department-tag absolute top-4 right-4"
+                    style={{
+                      backgroundColor: `${getDepartmentColor(selectedEntry.department)}20`,
+                      color: getDepartmentColor(selectedEntry.department),
+                      border: `1px solid ${getDepartmentColor(selectedEntry.department)}40`  
+                    }}
+                  >
+                    {selectedEntry.department}  
+                  </span>
                   <h2 className="text-2xl font-bold mb-2" style={{color: '#023020'}}>
                     {formatStardate(selectedEntry.createdAt)}
                   </h2>
