@@ -163,7 +163,7 @@ export default function AudioRecorder() {
   }
 
   return (
-    <div className="flex items-center bg-white/5 backdrop-blur-xs px-3 py-3 min-w-8 min-h-8 rounded-full transition-all border border-gray-800 shadow-lg shadow-gray-800">
+    <div className="flex items-center bg-white/5 backdrop-blur-xs px-3 py-3 min-w-8 min-h-8 rounded-full transition-all border border-gray-500/26 shadow-md shadow-gray-800/50">
       {!isRecording && (
         <span className="w-full h-full" onClick={toggleRecordingOn}>🎙️</span>
       )}
