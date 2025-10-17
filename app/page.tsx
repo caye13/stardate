@@ -3,6 +3,7 @@ import { api } from '@/lib/trpc/client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { FaMicrophone, FaTimes, FaSignOutAlt } from 'react-icons/fa'
+import Link from 'next/link'
 
 export default function Home() {
   const [email, setEmail] = useState('')
@@ -316,18 +317,30 @@ const Style = () => (
         <header className="fixed top-0 left-0 right-0 z-50 p-4">
           <div className="max-w-max mx-auto flex items-center gap-2 px-2 py-2 rounded-full glossy-nav">
             {/* Navigation Tabs */}
-            {['Personal Logs', 'Officers Logs', 'Tasks'].map(tab => (
+            <Link href="/">
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  activeTab === tab ? 'glass-button-active' : 'glass-button'
-                }`}
-                style={{color: activeTab === tab ? '#023020' : '#4b5563'}}
+                className="px-4 py-2 rounded-full text-sm font-medium glass-button-active transition-all"
+                style={{color: '#023020'}}
               >
-                {tab}
+                Personal Logs
               </button>
-            ))}
+            </Link>
+            <Link href="/officers-log">
+              <button
+                className="px-4 py-2 rounded-full text-sm font-medium glass-button transition-all"
+                style={{color: '#4b5563'}}
+              >
+                Officers Logs
+              </button>
+            </Link>
+            <Link href="/tasks">
+              <button
+                className="px-4 py-2 rounded-full text-sm font-medium glass-button transition-all"
+                style={{color: '#4b5563'}}
+              >
+                Tasks
+              </button>
+            </Link>
 
             {/* Sign Out Button */}
             <button
