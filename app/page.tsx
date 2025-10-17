@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { FaMicrophone, FaTimes, FaSignOutAlt } from 'react-icons/fa'
 import Link from 'next/link'
+import AudioRecorder from '@/components/AudioRecorder'
 
 export default function Home() {
   const [email, setEmail] = useState('')
@@ -12,6 +13,8 @@ export default function Home() {
   const [content, setContent] = useState('')
   const [activeTab, setActiveTab] = useState('Personal Logs')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [transcription, setTranscription] = useState('')
+  const [isRecording, setIsRecording] = useState(false)
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
   const [isSliding, setIsSliding] = useState(false)
   const [slideDirection, setSlideDirection] = useState<'in' | 'out'>('in')
@@ -55,7 +58,7 @@ export default function Home() {
     await supabase.auth.signOut()
     utils.auth.getUser.invalidate()
   }
-  
+
   const formatStardate = (dateString: string | Date) => {
     const date = new Date(dateString)
     const year = date.getFullYear()
@@ -81,9 +84,9 @@ export default function Home() {
     }, 500)
   }
 
-// --- STYLE COMPONENT ---
-const Style = () => (
-<style>{`
+  // --- STYLE COMPONENT ---
+  const Style = () => (
+    <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
     
     body, #__next {
@@ -279,7 +282,7 @@ const Style = () => (
     }
 
 `}</style>
-);
+  );
 
   // --- LOGIN/SIGNUP VIEW ---
   if (!userData?.user) {
@@ -287,18 +290,18 @@ const Style = () => (
       <>
         <Style />
         <div className="min-h-screen w-full flex items-center justify-center p-4">
-            <div className="background-shape shape1"></div>
-            <div className="background-shape shape2"></div>
-            <div className="w-full max-w-md p-8 space-y-6 rounded-2xl glass-card relative z-10">
-                <h1 className="text-4xl font-bold text-center" style={{color: '#023020'}}>Stardate</h1>
-                <p className="text-center text-gray-600">Log your journey, one entry at a time.</p>
-                <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 rounded-lg styled-input"/>
-                <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-lg styled-input"/>
-                <div className="flex flex-col sm:flex-row gap-4 pt-2">
-                    <button onClick={() => signUp.mutate({ email, password })} className="flex-1 py-3 rounded-lg primary-button">Sign Up</button>
-                    <button onClick={handleSignIn} className="flex-1 py-3 rounded-lg primary-button">Sign In</button>
-                </div>
+          <div className="background-shape shape1"></div>
+          <div className="background-shape shape2"></div>
+          <div className="w-full max-w-md p-8 space-y-6 rounded-2xl glass-card relative z-10">
+            <h1 className="text-4xl font-bold text-center" style={{ color: '#023020' }}>Stardate</h1>
+            <p className="text-center text-gray-600">Log your journey, one entry at a time.</p>
+            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 rounded-lg styled-input" />
+            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-lg styled-input" />
+            <div className="flex flex-col sm:flex-row gap-4 pt-2">
+              <button onClick={() => signUp.mutate({ email, password })} className="flex-1 py-3 rounded-lg primary-button">Sign Up</button>
+              <button onClick={handleSignIn} className="flex-1 py-3 rounded-lg primary-button">Sign In</button>
             </div>
+          </div>
         </div>
       </>
     )
@@ -312,7 +315,7 @@ const Style = () => (
         <div className="background-shape shape1"></div>
         <div className="background-shape shape2"></div>
         <div className="background-shape shape3"></div>
-        
+
         {/* Top Navigation Bar */}
         <header className="fixed top-0 left-0 right-0 z-50 p-4">
           <div className="max-w-max mx-auto flex items-center gap-2 px-2 py-2 rounded-full glossy-nav">
@@ -346,7 +349,7 @@ const Style = () => (
             <button
               onClick={handleSignOut}
               className="px-4 py-2 rounded-full text-sm font-medium glass-button transition-all"
-              style={{color: '#4b5563'}}
+              style={{ color: '#4b5563' }}
             >
               Sign Out
             </button>
@@ -366,11 +369,10 @@ const Style = () => (
                 >
                   <button
                     onClick={() => handleEntryClick(entry.id)}
-                    className={`w-full text-left px-6 py-4 rounded-full transition-all ${
-                      selectedEntryId === entry.id ? 'entry-glass-selected' : 'entry-glass'
-                    }`}
+                    className={`w-full text-left px-6 py-4 rounded-full transition-all ${selectedEntryId === entry.id ? 'entry-glass-selected' : 'entry-glass'
+                      }`}
                   >
-                    <h3 className="text-base font-semibold" style={{color: '#023020'}}>
+                    <h3 className="text-base font-semibold" style={{ color: '#023020' }}>
                       {formatStardate(entry.createdAt)}
                     </h3>
                   </button>
@@ -380,7 +382,7 @@ const Style = () => (
           </div>
 
           {/* Divider */}
-          {selectedEntryId && <div className="split-divider" style={{opacity: slideDirection === 'out' ? 0 : 1, transition: 'opacity 0.5s'}}></div>}
+          {selectedEntryId && <div className="split-divider" style={{ opacity: slideDirection === 'out' ? 0 : 1, transition: 'opacity 0.5s' }}></div>}
 
           {/* Right Side - Expanded Entry View */}
           {selectedEntryId && selectedEntry && (
@@ -389,13 +391,13 @@ const Style = () => (
                 <button
                   onClick={handleBackClick}
                   className="mb-6 px-4 py-2 rounded-lg glass-button text-sm font-medium"
-                  style={{color: '#023020'}}
+                  style={{ color: '#023020' }}
                 >
                   ← Back to List
                 </button>
-                
+
                 <div className="glass-card p-8 rounded-2xl">
-                  <h2 className="text-2xl font-bold mb-2" style={{color: '#023020'}}>
+                  <h2 className="text-2xl font-bold mb-2" style={{ color: '#023020' }}>
                     {formatStardate(selectedEntry.createdAt)}
                   </h2>
                   <h3 className="text-3xl font-bold text-gray-800 mb-6">
@@ -413,57 +415,64 @@ const Style = () => (
         </div>
 
         {/* Floating Action Button */}
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="fixed bottom-8 right-8 w-16 h-16 flex items-center justify-center rounded-full primary-button cursor-pointer z-50 shadow-xl"
-        >
-          <FaMicrophone size={24} />
-        </button>
+        {/* <button */}
+        {/*   onClick={() => setIsModalOpen(true)} */}
+        {/*   className="fixed bottom-8 right-8 w-16 h-16 flex items-center justify-center rounded-full primary-button cursor-pointer z-50 shadow-xl" */}
+        {/* > */}
+        {/*   <FaMicrophone size={24} /> */}
+        {/* </button> */}
+
+        {/* Centered Floating Action Button */}
+        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
+          <AudioRecorder setTranscription={setTranscription} setIsRecording={setIsRecording} />
+        </div>
 
         {/* New Entry Modal */}
-        {isModalOpen && (
-          <div
-            className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-[100]"
-            onClick={() => setIsModalOpen(false)}
-          >
+        {
+          isModalOpen && (
             <div
-              className="w-full max-w-lg p-6 rounded-2xl glass-card relative"
-              onClick={(e) => e.stopPropagation()}
+              className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-[100]"
+              onClick={() => setIsModalOpen(false)}
             >
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-800"
+              <div
+                className="w-full max-w-lg p-6 rounded-2xl glass-card relative"
+                onClick={(e) => e.stopPropagation()}
               >
-                <FaTimes size={20} />
-              </button>
-              <h2 className="text-2xl font-semibold mb-4" style={{color: '#023020'}}>
-                New Stardate Entry
-              </h2>
-              <input
-                type="text"
-                placeholder="Title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-4 py-3 mb-3 rounded-lg styled-input"
-              />
-              <textarea
-                placeholder="Write your thoughts..."
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                rows={6}
-                className="w-full px-4 py-3 mb-4 rounded-lg styled-textarea"
-              />
-              <button
-                onClick={() => createEntry.mutate({ title, content })}
-                disabled={!title || !content}
-                className="w-full py-3 rounded-lg primary-button"
-              >
-                Create Entry
-              </button>
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-800"
+                >
+                  <FaTimes size={20} />
+                </button>
+                <h2 className="text-2xl font-semibold mb-4" style={{ color: '#023020' }}>
+                  New Stardate Entry
+                </h2>
+                <input
+                  type="text"
+                  placeholder="Title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full px-4 py-3 mb-3 rounded-lg styled-input"
+                />
+                <textarea
+                  placeholder="Write your thoughts..."
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  rows={6}
+                  className="w-full px-4 py-3 mb-4 rounded-lg styled-textarea"
+                />
+                <button
+                  onClick={() => createEntry.mutate({ title, content })}
+                  disabled={!title || !content}
+                  className="w-full py-3 rounded-lg primary-button"
+                >
+                  Create Entry
+                </button>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )
+        }
+      </div >
     </>
   )
 }

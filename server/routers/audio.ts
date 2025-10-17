@@ -49,15 +49,6 @@ export const audioRouter = router({
         audio: uploadUrl,
       })
 
-      // Save to journal using Prisma directly
-      const journalEntry = await ctx.prisma.journalEntry.create({
-        data: {
-          title: `Personal Log (Stardate: ${new Date().toLocaleDateString()})`,
-          content: transcript.text || '',
-          userId: ctx.userId,
-        },
-      })
-
       return {
         id: transcript.id,
         text: transcript.text,
