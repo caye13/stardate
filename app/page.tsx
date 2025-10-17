@@ -2,8 +2,6 @@
 import { api } from '@/lib/trpc/client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import AudioRecorder from '@/components/AudioRecorder'
-import Link from 'next/link'
 import { FaMicrophone, FaTimes, FaSignOutAlt } from 'react-icons/fa'
 
 export default function Home() {
@@ -14,6 +12,8 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState('Personal Logs')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
+  const [isSliding, setIsSliding] = useState(false)
+  const [slideDirection, setSlideDirection] = useState<'in' | 'out'>('in')
 
 
   const supabase = createClient()
@@ -54,7 +54,7 @@ export default function Home() {
     await supabase.auth.signOut()
     utils.auth.getUser.invalidate()
   }
-
+  
   const formatStardate = (dateString: string | Date) => {
     const date = new Date(dateString)
     const year = date.getFullYear()
@@ -66,9 +66,23 @@ export default function Home() {
 
   const selectedEntry = entries?.find(e => e.id === selectedEntryId)
 
-  // --- STYLE COMPONENT ---
-  const Style = () => (
-    <style>{`
+  const handleEntryClick = (entryId: string) => {
+    setSlideDirection('in')
+    setIsSliding(true)
+    setSelectedEntryId(entryId)
+  }
+
+  const handleBackClick = () => {
+    setSlideDirection('out')
+    setTimeout(() => {
+      setSelectedEntryId(null)
+      setIsSliding(false)
+    }, 500)
+  }
+
+// --- STYLE COMPONENT ---
+const Style = () => (
+<style>{`
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
     
     body, #__next {
@@ -78,27 +92,7 @@ export default function Home() {
         overflow-x: hidden;
     }
 
-    /* Background image overlay */
-    .background-image {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        z-index: 0;
-    }
-    
-    .background-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.7);
-        backdrop-filter: blur(8px);
-        z-index: 1;
-    }
+
 
     /* Green background shapes (when no custom background) */
     .background-shape {
@@ -144,6 +138,21 @@ export default function Home() {
     .glass-card:hover {
         background: rgba(255, 255, 255, 0.85);
         box-shadow: 0 8px 32px 0 rgba(2, 48, 32, 0.15);
+    }
+    
+    /* Glossy navbar */
+    .glossy-nav {
+        background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.95) 0%,
+            rgba(255, 255, 255, 0.85) 50%,
+            rgba(255, 255, 255, 0.95) 100%);
+        backdrop-filter: blur(40px) saturate(180%);
+        -webkit-backdrop-filter: blur(40px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 1);
+        box-shadow: 
+            0 8px 32px 0 rgba(2, 48, 32, 0.15),
+            0 2px 8px 0 rgba(255, 255, 255, 0.8) inset,
+            0 -2px 8px 0 rgba(2, 48, 32, 0.05) inset;
     }
 
     /* Very transparent entry cards */
@@ -222,7 +231,41 @@ export default function Home() {
         to { opacity: 1; transform: translateY(0); }
     }
     .entry-card {
-        animation: fadeIn 0.4s ease-out forwards;
+        // animation: fadeIn 0.4s ease-out forwards;
+    }
+    
+    @keyframes slideInRight {
+        from { 
+            opacity: 0;
+            transform: translateX(100%);
+        }
+        to { 
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    @keyframes slideOutRight {
+        from { 
+            opacity: 1;
+            transform: translateX(0);
+        }
+        to { 
+            opacity: 0;
+            transform: translateX(100%);
+        }
+    }
+    
+    .slide-in {
+        animation: slideInRight 0.4s ease-out forwards;
+    }
+    
+    .slide-out {
+        animation: slideOutRight 0.5s ease-in-out forwards;
+    }
+    
+    .list-expand {
+        transition: width 0.5s ease-in-out, max-width 0.5s ease-in-out;
     }
 
     .split-divider {
@@ -233,30 +276,9 @@ export default function Home() {
             rgba(2, 48, 32, 0) 100%
         );
     }
-    
-    .bg-input-container {
-        position: fixed;
-        bottom: 24px;
-        right: 24px;
-        z-index: 60;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .bg-input-slide {
-        width: 0;
-        opacity: 0;
-        overflow: hidden;
-        transition: all 0.3s ease;
-    }
-    
-    .bg-input-slide.open {
-        width: 280px;
-        opacity: 1;
-    }
+
 `}</style>
-  );
+);
 
   // --- LOGIN/SIGNUP VIEW ---
   if (!userData?.user) {
@@ -264,16 +286,18 @@ export default function Home() {
       <>
         <Style />
         <div className="min-h-screen w-full flex items-center justify-center p-4">
-          <div className="w-full max-w-md p-8 space-y-6 rounded-2xl glass-card relative z-10">
-            <h1 className="text-4xl font-bold text-center" style={{ color: '#023020' }}>Stardate</h1>
-            <p className="text-center text-gray-600">Log your journey, one entry at a time.</p>
-            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 rounded-lg styled-input" />
-            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-lg styled-input" />
-            <div className="flex flex-col sm:flex-row gap-4 pt-2">
-              <button onClick={() => signUp.mutate({ email, password })} className="flex-1 py-3 rounded-lg primary-button">Sign Up</button>
-              <button onClick={handleSignIn} className="flex-1 py-3 rounded-lg primary-button">Sign In</button>
+            <div className="background-shape shape1"></div>
+            <div className="background-shape shape2"></div>
+            <div className="w-full max-w-md p-8 space-y-6 rounded-2xl glass-card relative z-10">
+                <h1 className="text-4xl font-bold text-center" style={{color: '#023020'}}>Stardate</h1>
+                <p className="text-center text-gray-600">Log your journey, one entry at a time.</p>
+                <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 rounded-lg styled-input"/>
+                <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-lg styled-input"/>
+                <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                    <button onClick={() => signUp.mutate({ email, password })} className="flex-1 py-3 rounded-lg primary-button">Sign Up</button>
+                    <button onClick={handleSignIn} className="flex-1 py-3 rounded-lg primary-button">Sign In</button>
+                </div>
             </div>
-          </div>
         </div>
       </>
     )
@@ -284,33 +308,34 @@ export default function Home() {
     <>
       <Style />
       <div className="relative min-h-screen w-full">
-
+        <div className="background-shape shape1"></div>
+        <div className="background-shape shape2"></div>
+        <div className="background-shape shape3"></div>
+        
         {/* Top Navigation Bar */}
         <header className="fixed top-0 left-0 right-0 z-50 p-4">
-          <div className="max-w-7xl mx-auto flex justify-between items-center p-3 rounded-2xl glass-card">
+          <div className="max-w-max mx-auto flex items-center gap-2 px-2 py-2 rounded-full glossy-nav">
             {/* Navigation Tabs */}
-            <nav className="flex gap-2">
-              {['Personal Logs', 'Officers Logs', 'Tasks'].map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-5 py-2 rounded-xl text-sm font-medium transition-all ${activeTab === tab ? 'glass-button-active' : 'glass-button'
-                    }`}
-                  style={{ color: activeTab === tab ? '#023020' : '#4b5563' }}
-                >
-                  {tab}
-                </button>
-              ))}
-            </nav>
+            {['Personal Logs', 'Officers Logs', 'Tasks'].map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  activeTab === tab ? 'glass-button-active' : 'glass-button'
+                }`}
+                style={{color: activeTab === tab ? '#023020' : '#4b5563'}}
+              >
+                {tab}
+              </button>
+            ))}
 
             {/* Sign Out Button */}
             <button
               onClick={handleSignOut}
-              title="Sign Out"
-              className="w-10 h-10 flex items-center justify-center rounded-xl glass-button"
-              style={{ color: '#023020' }}
+              className="px-4 py-2 rounded-full text-sm font-medium glass-button transition-all"
+              style={{color: '#4b5563'}}
             >
-              <FaSignOutAlt size={18} />
+              Sign Out
             </button>
           </div>
         </header>
@@ -318,8 +343,8 @@ export default function Home() {
         {/* Main Content Area */}
         <div className="flex h-screen pt-24">
           {/* Left Side - Entry List */}
-          <div className={`${selectedEntryId ? 'w-1/2' : 'w-full max-w-3xl mx-auto'} transition-all duration-300 overflow-y-auto p-6 pb-28`}>
-            <div className="space-y-4 relative z-10">
+          <div className={`${selectedEntryId ? 'w-1/2' : 'w-full max-w-xl mx-auto'} list-expand overflow-y-auto p-6 pb-28`}>
+            <div className="space-y-3 relative z-10">
               {entries?.map((entry, index) => (
                 <div
                   key={entry.id}
@@ -327,21 +352,14 @@ export default function Home() {
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <button
-                    onClick={() => setSelectedEntryId(entry.id)}
-                    className={`w-full text-left py-2 px-5 rounded-xl transition-all ${selectedEntryId === entry.id ? 'entry-glass-selected' : 'entry-glass'
-                      }`}
+                    onClick={() => handleEntryClick(entry.id)}
+                    className={`w-full text-left px-6 py-4 rounded-full transition-all ${
+                      selectedEntryId === entry.id ? 'entry-glass-selected' : 'entry-glass'
+                    }`}
                   >
-                    <h3 className="text-lg font-semibold mb-1" style={{ color: '#023020' }}>
+                    <h3 className="text-base font-semibold" style={{color: '#023020'}}>
                       {formatStardate(entry.createdAt)}
                     </h3>
-                    {!selectedEntryId && (
-                      <>
-                        {/* <h4 className="text-xl font-bold text-gray-800 mb-2">{entry.title}</h4>
-                        <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">
-                          {entry.content}
-                        </p> */}
-                      </>
-                    )}
                   </button>
                 </div>
               ))}
@@ -349,22 +367,22 @@ export default function Home() {
           </div>
 
           {/* Divider */}
-          {selectedEntryId && <div className="split-divider"></div>}
+          {selectedEntryId && <div className="split-divider" style={{opacity: slideDirection === 'out' ? 0 : 1, transition: 'opacity 0.5s'}}></div>}
 
           {/* Right Side - Expanded Entry View */}
           {selectedEntryId && selectedEntry && (
-            <div className="w-1/2 overflow-y-auto p-6 pb-28 relative z-10">
+            <div className={`w-1/2 overflow-y-auto p-6 pb-28 relative z-10 ${slideDirection === 'in' ? 'slide-in' : 'slide-out'}`}>
               <div className="max-w-2xl mx-auto">
                 <button
-                  onClick={() => setSelectedEntryId(null)}
+                  onClick={handleBackClick}
                   className="mb-6 px-4 py-2 rounded-lg glass-button text-sm font-medium"
-                  style={{ color: '#023020' }}
+                  style={{color: '#023020'}}
                 >
                   ← Back to List
                 </button>
-
+                
                 <div className="glass-card p-8 rounded-2xl">
-                  <h2 className="text-2xl font-bold mb-2" style={{ color: '#023020' }}>
+                  <h2 className="text-2xl font-bold mb-2" style={{color: '#023020'}}>
                     {formatStardate(selectedEntry.createdAt)}
                   </h2>
                   <h3 className="text-3xl font-bold text-gray-800 mb-6">
@@ -381,15 +399,10 @@ export default function Home() {
           )}
         </div>
 
-        {/* Centered Floating Action Button */}
-        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
-          <AudioRecorder />
-        </div>
-
         {/* Floating Action Button */}
         <button
           onClick={() => setIsModalOpen(true)}
-          className="fixed bottom-24 right-8 w-16 h-16 flex items-center justify-center rounded-full primary-button cursor-pointer z-50 shadow-xl"
+          className="fixed bottom-8 right-8 w-16 h-16 flex items-center justify-center rounded-full primary-button cursor-pointer z-50 shadow-xl"
         >
           <FaMicrophone size={24} />
         </button>
@@ -410,7 +423,7 @@ export default function Home() {
               >
                 <FaTimes size={20} />
               </button>
-              <h2 className="text-2xl font-semibold mb-4" style={{ color: '#023020' }}>
+              <h2 className="text-2xl font-semibold mb-4" style={{color: '#023020'}}>
                 New Stardate Entry
               </h2>
               <input
