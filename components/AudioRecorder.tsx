@@ -20,7 +20,20 @@ export default function AudioRecorder({ setIsRecording: setExternalIsRecording, 
   const audioContextRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
   const animationRef = useRef<number | null>(null)
+  const communicatorBeepRef = useRef<HTMLAudioElement | null>(null)
 
+  const playAudio = () => {
+    // If the audio element doesn't exist yet, create it
+    if (!communicatorBeepRef.current) {
+      communicatorBeepRef.current = new Audio('/communicatorbeep.mp3') // Put your MP3 in public folder
+    }
+
+    // Reset to start and play
+    communicatorBeepRef.current.currentTime = 1
+    communicatorBeepRef.current.play().catch(error => {
+      console.error('Error playing audio:', error)
+    })
+  }
   const transcribeMutation = api.audio.transcribeBuffer.useMutation({
     onSuccess: (data) => {
       console.log('Transcription:', data)
@@ -50,6 +63,7 @@ export default function AudioRecorder({ setIsRecording: setExternalIsRecording, 
 
   const startRecording = async () => {
     try {
+      playAudio()
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       const mediaRecorder = new MediaRecorder(stream)
       mediaRecorderRef.current = mediaRecorder
@@ -166,7 +180,7 @@ export default function AudioRecorder({ setIsRecording: setExternalIsRecording, 
   return (
     <div
       onClick={!isRecording ? toggleRecordingOn : () => { }}
-      className={`flex items-center bg-white/5 backdrop-blur-sm px-3 py-3 ${!isRecording ? 'cursor-pointer items-center justify-center w-14 h-14' : 'min-w-8 min-h-8'} rounded-full transition-all border border-gray-500/26 shadow-md shadow-gray-800/50`}
+      className={`flex items-center bg-white/26 backdrop-blur-sm px-3 py-3 ${!isRecording ? 'cursor-pointer items-center justify-center w-14 h-14' : 'min-w-8 min-h-8'} rounded-full transition-all border border-gray-500/26 shadow-xl shadow-gray-800/50`}
     >
       {!isRecording && (
         <span className="" onClick={toggleRecordingOn}>🎙️</span>
@@ -178,7 +192,7 @@ export default function AudioRecorder({ setIsRecording: setExternalIsRecording, 
       >
         {isPaused ? '▶️' : '⏸️'}
       </button>
-      <div className={`flex transition-all duration-500 ${isRecording ? 'w-full p-4' : 'w-0 overflow-hidden'} items-center gap-1 h-8`}>
+      <div className={`flex transition-all duration-500 ${isRecording ? 'w-full p-4' : 'w-0'} items-center gap-1 h-8`}>
         {audioLevels.map((level, i) => (
           <div
             key={i}

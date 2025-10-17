@@ -169,14 +169,14 @@ export default function Home() {
         background: rgba(255, 255, 255, 0.25);
         backdrop-filter: blur(15px);
         -webkit-backdrop-filter: blur(15px);
-        border: 1px solid rgba(255, 255, 255, 0.4);
+        border: 1px solid rgba(10, 48, 36, 0.13);
         box-shadow: 0 4px 16px 0 rgba(2, 48, 32, 0.05);
         transition: all 0.3s ease;
     }
     
     .entry-glass:hover {
         background: rgba(255, 255, 255, 0.75);
-        border: 1px solid rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(10, 48, 36, 0.3);
         box-shadow: 0 8px 32px 0 rgba(2, 48, 32, 0.15);
         transform: translateY(-2px);
     }
@@ -301,11 +301,12 @@ export default function Home() {
 
           {/* You can add a gif here */}
           <div className="text-center relative z-10">
-            <img
-              src="/loading.gif"
-              alt="Loading..."
-              className="w-32 h-32 mx-auto mb-4"
-            />
+            {/* <img */}
+            {/*   src="/loading.gif" */}
+            {/*   alt="Loading..." */}
+            {/*   className="w-32 h-32 mx-auto mb-4" */}
+            {/* /> */}
+            <p className="font-bold text-2xl">To boldly go where no one has gone before</p>
           </div>
         </div>
       </>
@@ -388,7 +389,7 @@ export default function Home() {
         <div className="flex h-screen pt-24">
           {/* Left Side - Entry List */}
           <div className={`${selectedEntryId ? 'w-1/2' : 'w-full max-w-xl mx-auto'} list-expand overflow-y-auto p-6 pb-28`}>
-            <div className="space-y-3 relative z-10">
+            <div className="space-y-1 relative z-10">
               {entries?.map((entry, index) => (
                 <div
                   key={entry.id}
@@ -397,12 +398,13 @@ export default function Home() {
                 >
                   <button
                     onClick={() => handleEntryClick(entry.id)}
-                    className={`w-full text-left px-6 py-4 rounded-full transition-all ${selectedEntryId === entry.id ? 'entry-glass-selected' : 'entry-glass'
+                    className={`w-full text-left px-3 py-2 rounded-md transition-all ${selectedEntryId === entry.id ? 'entry-glass-selected' : 'entry-glass'
                       }`}
                   >
                     <h3 className="text-base font-semibold" style={{ color: '#023020' }}>
                       {formatStardate(entry.createdAt)}
                     </h3>
+                    <p className='text-xs w-full overflow-hidden line-clamp-1'>{entry.content.substring(0, 100)}</p>
                   </button>
                 </div>
               ))}
