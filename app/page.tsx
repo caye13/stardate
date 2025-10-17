@@ -2,6 +2,7 @@
 import { api } from '@/lib/trpc/client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import AudioRecorder from '@/components/AudioRecorder'
 
 export default function Home() {
   const [email, setEmail] = useState('')
@@ -155,45 +156,45 @@ export default function Home() {
       <>
         <Style />
         <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden p-4">
-            <div className="background-shape shape1"></div>
-            <div className="background-shape shape2"></div>
+          <div className="background-shape shape1"></div>
+          <div className="background-shape shape2"></div>
 
-            <div className="w-full max-w-md p-8 space-y-6 rounded-2xl glass-container z-10">
-                <h1 className="text-3xl font-bold text-center text-[#023020]">
-                    Stardate Logging App
-                </h1>
+          <div className="w-full max-w-md p-8 space-y-6 rounded-2xl glass-container z-10">
+            <h1 className="text-3xl font-bold text-center text-[#023020]">
+              Stardate Logging App
+            </h1>
 
-                <input
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 border rounded-md styled-input"
-                />
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-3 border rounded-md styled-input"
+            />
 
-                <input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 border rounded-md styled-input"
-                />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-3 border rounded-md styled-input"
+            />
 
-                <div className="flex flex-col sm:flex-row gap-4 pt-2">
-                    <button
-                        onClick={() => signUp.mutate({ email, password })}
-                        className="flex-1 py-3 rounded-md glass-button font-semibold"
-                    >
-                        Sign Up
-                    </button>
-                    <button
-                        onClick={handleSignIn}
-                        className="flex-1 py-3 rounded-md glass-button font-semibold"
-                    >
-                        Sign In
-                    </button>
-                </div>
+            <div className="flex flex-col sm:flex-row gap-4 pt-2">
+              <button
+                onClick={() => signUp.mutate({ email, password })}
+                className="flex-1 py-3 rounded-md glass-button font-semibold"
+              >
+                Sign Up
+              </button>
+              <button
+                onClick={handleSignIn}
+                className="flex-1 py-3 rounded-md glass-button font-semibold"
+              >
+                Sign In
+              </button>
             </div>
+          </div>
         </div>
       </>
     )
@@ -208,6 +209,7 @@ export default function Home() {
 
         <div className="max-w-4xl mx-auto z-10">
           <header className="flex flex-col sm:flex-row justify-between items-center mb-8 p-4 rounded-2xl glass-container">
+            <AudioRecorder />
             <h1 className="text-3xl font-bold text-[#023020]">My Journal</h1>
             <div className="flex items-center gap-4 mt-4 sm:mt-0">
               <span className="text-gray-800 text-sm font-medium">{userData.user.email}</span>
