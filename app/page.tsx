@@ -209,7 +209,6 @@ export default function Home() {
 
         <div className="max-w-4xl mx-auto z-10">
           <header className="flex flex-col sm:flex-row justify-between items-center mb-8 p-4 rounded-2xl glass-container">
-            <AudioRecorder />
             <h1 className="text-3xl font-bold text-[#023020]">My Journal</h1>
             <div className="flex items-center gap-4 mt-4 sm:mt-0">
               <span className="text-gray-800 text-sm font-medium">{userData.user.email}</span>
@@ -272,6 +271,9 @@ export default function Home() {
             </div>
           </main>
         </div>
+      </div>
+      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
+        <AudioRecorder />
       </div>
     </>
   )

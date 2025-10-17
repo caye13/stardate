@@ -163,9 +163,9 @@ export default function AudioRecorder() {
   }
 
   return (
-    <div className="flex items-center bg-green-500 px-4 py-3 rounded-full transition-all border border-gray-800">
+    <div className="flex items-center bg-white/5 backdrop-blur-xs px-3 py-3 min-w-8 min-h-8 rounded-full transition-all border border-gray-800 shadow-lg shadow-gray-800">
       {!isRecording && (
-        <span onClick={toggleRecordingOn}>Record</span>
+        <span className="w-full h-full" onClick={toggleRecordingOn}>🎙️</span>
       )}
       <button
         disabled={!isRecording}
@@ -174,7 +174,7 @@ export default function AudioRecorder() {
       >
         {isPaused ? '▶️' : '⏸️'}
       </button>
-      <div className={`flex transition-all duration-500 ease-in-out ${isRecording ? 'w-full p-4' : 'w-0 overflow-hidden'} items-center gap-1 h-8`}>
+      <div className={`flex transition-all duration-500 ${isRecording ? 'w-full p-4' : 'w-0 overflow-hidden'} items-center gap-1 h-8`}>
         {audioLevels.map((level, i) => (
           <div
             key={i}
@@ -194,48 +194,6 @@ export default function AudioRecorder() {
         ⏹️
       </button>
 
-    </div>
-  )
-  return (
-    <div className="flex items-center justify-center">
-      {!isRecording ? (
-        <button
-          onClick={startRecording}
-          className="bg-red-500 text-white px-6 py-3 rounded-full hover:bg-red-600 flex items-center gap-2 font-semibold transition-all"
-        >
-          <span>🎤</span>
-          <span>Record</span>
-        </button>
-      ) : (
-        <div className="flex items-center gap-3 bg-gray-900 px-4 py-3 rounded-full transition-all">
-          <button
-            onClick={isPaused ? resumeRecording : pauseRecording}
-            className="text-white hover:text-gray-300 w-8 h-8 flex items-center justify-center"
-          >
-            {isPaused ? '▶️' : '⏸️'}
-          </button>
-
-          <div className="flex items-center gap-1 h-8 px-4">
-            {audioLevels.map((level, i) => (
-              <div
-                key={i}
-                className="w-1 bg-red-500 rounded-full transition-all duration-100"
-                style={{
-                  height: `${Math.max(8, level * 32)}px`,
-                  opacity: isPaused ? 0.3 : 1,
-                }}
-              />
-            ))}
-          </div>
-
-          <button
-            onClick={stopRecording}
-            className="text-white hover:text-gray-300 w-8 h-8 flex items-center justify-center"
-          >
-            ⏹️
-          </button>
-        </div>
-      )}
     </div>
   )
 }

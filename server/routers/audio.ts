@@ -37,7 +37,7 @@ export const audioRouter = router({
         fileName: z.string().optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       // Decode base64 to buffer
       const buffer = Buffer.from(input.audioData, 'base64')
 
@@ -49,6 +49,14 @@ export const audioRouter = router({
         audio: uploadUrl,
       })
 
+      // Save to journal using Prisma directly
+      const journalEntry = await ctx.prisma.journalEntry.create({
+        data: {
+          title: `Personal Log (Stardate: ${new Date().toLocaleDateString()})`,
+          content: transcript.text || '',
+          userId: ctx.userId,
+        },
+      })
 
       return {
         id: transcript.id,
@@ -77,4 +85,4 @@ export const audioRouter = router({
     const transcripts = await client.transcripts.list()
     return transcripts.transcripts
   }),
-}
+})
