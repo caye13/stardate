@@ -22,8 +22,14 @@ export const officerRouter = router({
 
   list: protectedProcedure.query(async ({ ctx }) => {
     return ctx.prisma.officerEntry.findMany({
-      where: { userId: ctx.userId },
       orderBy: { createdAt: 'desc' },
+      include: { 
+        user: {
+          select: { 
+            email: true 
+          }
+        },
+      },
     })
   }),
 
@@ -32,7 +38,6 @@ export const officerRouter = router({
     .query(async ({ ctx, input }) => {
       return ctx.prisma.officerEntry.findMany({
         where: {
-          userId: ctx.userId,
           department: input.department,
         },
         orderBy: { createdAt: 'desc' },

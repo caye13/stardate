@@ -57,10 +57,6 @@ export default function OfficersLog() {
     },
   })
 
-  const { data: entries } = api.officer.list.useQuery(undefined, {
-    enabled: !!userData?.user,
-  })
-
   const createEntry = api.officer.create.useMutation({
     onSuccess: () => {
       utils.officer.list.invalidate()
@@ -83,6 +79,14 @@ export default function OfficersLog() {
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     utils.auth.getUser.invalidate()
+  }
+
+  const { data: entries } = api.officer.list.useQuery(undefined, {
+    enabled: !!userData?.user,
+  })
+
+  const getUsernameFromEmail = (email: string) => {
+    return email.split('@')[0]
   }
 
   const formatStardate = (dateString: string | Date) => {
@@ -495,12 +499,13 @@ export default function OfficersLog() {
                   >
                     <div className="flex items-center justify-between gap-2 mb-1">
                       <h3 className="text-base font-semibold" style={{ color: '#023020' }}>
-                        {formatStardate(entry.createdAt)}
+                        {getUsernameFromEmail(entry.user.email)}
                       </h3>
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getDepartmentColor(entry.department)}`}>
                         {entry.department}
                       </span>
                     </div>
+                    <p className='text-xs text-gray-500'>{formatStardate(entry.createdAt)}</p>
                     <p className='text-xs w-full overflow-hidden line-clamp-1'>{entry.content.substring(0, 100)}</p>
                   </button>
                 </div>
