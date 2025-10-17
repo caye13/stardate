@@ -35,9 +35,32 @@ export const audioRouter = router({
       z.object({
         audioData: z.string(), // Base64 encoded audio
         fileName: z.string().optional(),
+        entryType: z.string().optional().default("personal"),
+        department: z.string().optional().default("Lower Deck")
       })
     )
     .mutation(async ({ ctx, input }) => {
+
+      let entry;
+      if (input.entryType.toLowerCase() === "personal") {
+        entry = await ctx.prisma.journalEntry.create({
+          data: {
+            title: '',
+            content: 'Processing...',
+            userId: ctx.userId,
+          }
+        })
+      } else if (input.entryType.toLowerCase() === "officer") {
+        entry = await ctx.prisma.officerEntry.create({
+          data: {
+            title: '',
+            content: 'Processing...',
+            userId: ctx.userId,
+            department: input.department
+          }
+        })
+      }
+
       // Decode base64 to buffer
       const buffer = Buffer.from(input.audioData, 'base64')
 
@@ -49,14 +72,22 @@ export const audioRouter = router({
         audio: uploadUrl,
       })
 
-      // Save to journal using Prisma directly
-      const journalEntry = await ctx.prisma.journalEntry.create({
-        data: {
-          title: `Personal Log (Stardate: ${new Date().toLocaleDateString()})`,
-          content: transcript.text || '',
-          userId: ctx.userId,
-        },
-      })
+      if (entry) {
+        if (input.entryType === "personal") {
+          await ctx.prisma.journalEntry.update({
+            where: { id: entry.id },
+            data: { content: transcript.text || "No audio detected." }
+          })
+        } else if (input.entryType === "officer") {
+          await ctx.prisma.officerEntry.update({
+            where: { id: entry.id },
+            data: { content: transcript.text || "No audio detected." }
+          })
+
+        }
+      }
+
+
 
       return {
         id: transcript.id,

@@ -3,21 +3,37 @@ import { api } from '@/lib/trpc/client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { FaMicrophone, FaTimes, FaSignOutAlt } from 'react-icons/fa'
-import Link from 'next/link'
 import AudioRecorder from '@/components/AudioRecorder'
+import { useRouter } from 'next/router'
+import Link from 'next/link'
 
-export default function Home() {
+const departments = ['Engineering', 'Medical', 'Operations', 'Security', 'Command', 'Sciences']
+const getDepartmentColor = (department: string) => {
+  const colors: Record<string, string> = {
+    'Engineering': 'bg-red-200 text-red-800 border-red-300',
+    'Medical': 'bg-sky-50 text-sky-700 border-sky-200',
+    'Sciences': 'bg-blue-500 text-white border-blue-600',
+    'Security': 'bg-red-800 text-white border-red-900',
+    'Command': 'bg-yellow-400 text-yellow-900 border-yellow-500',
+    'Operations': 'bg-blue-200 text-blue-800 border-blue-300'
+  }
+  return colors[department] || 'bg-gray-200 text-gray-800 border-gray-300'
+}
+
+export default function OfficersLog() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
-  const [activeTab, setActiveTab] = useState('Personal Logs')
+  const [department, setDepartment] = useState(departments[0])
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [isRecording, setIsRecording] = useState(false)
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
   const [isSliding, setIsSliding] = useState(false)
   const [slideDirection, setSlideDirection] = useState<'in' | 'out'>('in')
-
+  const [transcription, setTranscription] = useState('')
+  const [isRecording, setIsRecording] = useState(false)
+  const [activeTab, setActiveTab] = useState('officers-log')
+  const [isDepartmentDropdownOpen, setIsDepartmentDropdownOpen] = useState(false)
 
   const supabase = createClient()
   const utils = api.useUtils()
@@ -30,21 +46,21 @@ export default function Home() {
     },
   })
 
-  const { data: entries } = api.journal.list.useQuery(undefined, {
+  const { data: entries } = api.officer.list.useQuery(undefined, {
     enabled: !!userData?.user,
   })
 
-  const createEntry = api.journal.create.useMutation({
+  const createEntry = api.officer.create.useMutation({
     onSuccess: () => {
-      utils.journal.list.invalidate()
+      utils.officer.list.invalidate()
       setTitle('')
       setContent('')
       setIsModalOpen(false)
     },
   })
 
-  const deleteEntry = api.journal.delete.useMutation({
-    onSuccess: () => utils.journal.list.invalidate(),
+  const deleteEntry = api.officer.delete.useMutation({
+    onSuccess: () => utils.officer.list.invalidate(),
   })
 
   const handleSignIn = async () => {
@@ -85,10 +101,28 @@ export default function Home() {
 
   useEffect(() => {
     if (!isRecording) {
-      utils.journal.list.invalidate()
+      utils.officer.list.invalidate()
     }
   }, [isRecording])
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      if (!target.closest('.department-dropdown')) {
+        setIsDepartmentDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  useEffect(() => {
+    const savedDepartment = localStorage.getItem('selectedDepartment')
+    if (savedDepartment && departments.includes(savedDepartment)) {
+      setDepartment(savedDepartment)
+    }
+  }, [])
   // --- STYLE COMPONENT ---
   const Style = () => (
     <style>{`
@@ -100,8 +134,6 @@ export default function Home() {
         color: #1f2937;
         overflow-x: hidden;
     }
-
-
 
     /* Green background shapes (when no custom background) */
     .background-shape {
@@ -164,7 +196,7 @@ export default function Home() {
             0 -2px 8px 0 rgba(2, 48, 32, 0.05) inset;
     }
 
-    /* Very transparent entry cards */
+    /* Very transparent entry cards - UPDATED TO MATCH PERSONAL LOGS */
     .entry-glass {
         background: rgba(255, 255, 255, 0.25);
         backdrop-filter: blur(15px);
@@ -285,7 +317,6 @@ export default function Home() {
             rgba(2, 48, 32, 0) 100%
         );
     }
-
 `}</style>
   );
 
@@ -298,14 +329,7 @@ export default function Home() {
           <div className="background-shape shape1"></div>
           <div className="background-shape shape2"></div>
           <div className="background-shape shape3"></div>
-
-          {/* You can add a gif here */}
           <div className="text-center relative z-10">
-            {/* <img */}
-            {/*   src="/loading.gif" */}
-            {/*   alt="Loading..." */}
-            {/*   className="w-32 h-32 mx-auto mb-4" */}
-            {/* /> */}
             <p className="font-bold text-2xl">To boldly go where no one has gone before</p>
           </div>
         </div>
@@ -348,19 +372,18 @@ export default function Home() {
         {/* Top Navigation Bar */}
         <header className="fixed top-0 left-0 right-0 z-50 p-4">
           <div className="max-w-max mx-auto flex items-center gap-2 px-2 py-2 rounded-full glossy-nav">
-            {/* Navigation Tabs */}
             <Link href="/">
               <button
-                className="px-4 py-2 rounded-full text-sm font-medium glass-button-active transition-all"
-                style={{ color: '#023020' }}
+                className="px-4 py-2 rounded-full text-sm font-medium glass-button transition-all"
+                style={{ color: '#4b5563' }}
               >
                 Personal Logs
               </button>
             </Link>
             <Link href="/officers-log">
               <button
-                className="px-4 py-2 rounded-full text-sm font-medium glass-button transition-all"
-                style={{ color: '#4b5563' }}
+                className="px-4 py-2 rounded-full text-sm font-medium glass-button-active transition-all"
+                style={{ color: '#023020' }}
               >
                 Officers Logs
               </button>
@@ -382,7 +405,57 @@ export default function Home() {
             >
               Sign Out
             </button>
-          </div>
+
+            {/* Department Dropdown */}
+            <div className="relative department-dropdown">
+              <button
+                onClick={() => setIsDepartmentDropdownOpen(!isDepartmentDropdownOpen)}
+                className="px-4 py-2 rounded-full text-sm font-medium glass-button transition-all flex items-center gap-2"
+                style={{ color: '#023020' }}
+              >
+                <span className={`w-2 h-2 rounded-full ${getDepartmentColor(department).split(' ')[0]}`}></span>
+                {department}
+                <svg
+                  className={`fill-current h-4 w-4 transition-transform ${isDepartmentDropdownOpen ? 'rotate-180' : ''}`}
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                >
+                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                </svg>
+              </button>
+
+              {isDepartmentDropdownOpen && (
+                <div
+                  className="absolute top-full mt-2 right-0 min-w-[180px] rounded-2xl overflow-hidden glass-card shadow-xl"
+                  style={{
+                    animation: 'fadeIn 0.2s ease-out',
+                    zIndex: 1000
+                  }}
+                >
+                  {departments.map((dept) => (
+                    <button
+                      key={dept}
+                      onClick={() => {
+                        setDepartment(dept)
+                        localStorage.setItem('selectedDepartment', dept)
+                        setIsDepartmentDropdownOpen(false)
+                      }}
+                      className={`w-full px-4 py-3 text-left text-sm font-medium transition-all flex items-center gap-3 ${department === dept
+                        ? 'bg-white/50'
+                        : 'hover:bg-white/30'
+                        }`}
+                      style={{ color: '#023020' }}
+                    >
+                      <span className={`w-3 h-3 rounded-full ${getDepartmentColor(dept).split(' ')[0]}`}></span>
+                      {dept}
+                      {department === dept && (
+                        <span className="ml-auto text-xs">✓</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>          </div>
         </header>
 
         {/* Main Content Area */}
@@ -401,9 +474,14 @@ export default function Home() {
                     className={`w-full text-left px-3 py-2 rounded-md transition-all ${selectedEntryId === entry.id ? 'entry-glass-selected' : 'entry-glass'
                       }`}
                   >
-                    <h3 className="text-base font-semibold" style={{ color: '#023020' }}>
-                      {formatStardate(entry.createdAt)}
-                    </h3>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <h3 className="text-base font-semibold" style={{ color: '#023020' }}>
+                        {formatStardate(entry.createdAt)}
+                      </h3>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${getDepartmentColor(entry.department)}`}>
+                        {entry.department}
+                      </span>
+                    </div>
                     <p className='text-xs w-full overflow-hidden line-clamp-1'>{entry.content.substring(0, 100)}</p>
                   </button>
                 </div>
@@ -444,65 +522,55 @@ export default function Home() {
           )}
         </div>
 
-        {/* Floating Action Button */}
-        {/* <button */}
-        {/*   onClick={() => setIsModalOpen(true)} */}
-        {/*   className="fixed bottom-8 right-8 w-16 h-16 flex items-center justify-center rounded-full primary-button cursor-pointer z-50 shadow-xl" */}
-        {/* > */}
-        {/*   <FaMicrophone size={24} /> */}
-        {/* </button> */}
-
-        {/* Centered Floating Action Button */}
-        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
-          <AudioRecorder setIsRecording={setIsRecording} entryType={"personal"} />
-        </div>
-
         {/* New Entry Modal */}
-        {
-          isModalOpen && (
+        {isModalOpen && (
+          <div
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-[100]"
+            onClick={() => setIsModalOpen(false)}
+          >
             <div
-              className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-[100]"
-              onClick={() => setIsModalOpen(false)}
+              className="w-full max-w-lg p-6 rounded-2xl glass-card relative"
+              onClick={(e) => e.stopPropagation()}
             >
-              <div
-                className="w-full max-w-lg p-6 rounded-2xl glass-card relative"
-                onClick={(e) => e.stopPropagation()}
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-800"
               >
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-800"
-                >
-                  <FaTimes size={20} />
-                </button>
-                <h2 className="text-2xl font-semibold mb-4" style={{ color: '#023020' }}>
-                  New Stardate Entry
-                </h2>
-                <input
-                  type="text"
-                  placeholder="Title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-4 py-3 mb-3 rounded-lg styled-input"
-                />
-                <textarea
-                  placeholder="Write your thoughts..."
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  rows={6}
-                  className="w-full px-4 py-3 mb-4 rounded-lg styled-textarea"
-                />
-                <button
-                  onClick={() => createEntry.mutate({ title, content })}
-                  disabled={!title || !content}
-                  className="w-full py-3 rounded-lg primary-button"
-                >
-                  Create Entry
-                </button>
-              </div>
+                <FaTimes size={20} />
+              </button>
+              <h2 className="text-2xl font-semibold mb-4" style={{ color: '#023020' }}>
+                New Officers Log Entry
+              </h2>
+              <input
+                type="text"
+                placeholder="Title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full px-4 py-3 mb-3 rounded-lg styled-input"
+              />
+              <textarea
+                placeholder="Write your thoughts..."
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                rows={6}
+                className="w-full px-4 py-3 mb-4 rounded-lg styled-textarea"
+              />
+              <button
+                onClick={() => createEntry.mutate({ title, content, department })}
+                disabled={!title || !content}
+                className="w-full py-3 rounded-lg primary-button"
+              >
+                Create Entry
+              </button>
             </div>
-          )
-        }
-      </div >
+          </div>
+        )}
+      </div>
+
+      {/* Centered Floating Action Button */}
+      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
+        <AudioRecorder setIsRecording={setIsRecording} entryType="officer" department={department} />
+      </div>
     </>
   )
 }
