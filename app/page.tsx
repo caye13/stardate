@@ -2,19 +2,22 @@
 import { api } from '@/lib/trpc/client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import AudioRecorder from '@/components/AudioRecorder'
-import Link from 'next/link'
 import { FaMicrophone, FaTimes, FaSignOutAlt } from 'react-icons/fa'
+import AudioRecorder from '@/components/AudioRecorder'
 
 export default function Home() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
-  const [activeTab, setActiveTab] = useState('Stardates')
+  const [activeTab, setActiveTab] = useState('Personal Logs')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [transcription, setTranscription] = useState('')
   const [isRecording, setIsRecording] = useState(false)
+  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
+  const [isSliding, setIsSliding] = useState(false)
+  const [slideDirection, setSlideDirection] = useState<'in' | 'out'>('in')
+
 
   const supabase = createClient()
   const utils = api.useUtils()
@@ -64,6 +67,22 @@ export default function Home() {
     return `${year}.${month}.${day} // ${time}`
   }
 
+  const selectedEntry = entries?.find(e => e.id === selectedEntryId)
+
+  const handleEntryClick = (entryId: string) => {
+    setSlideDirection('in')
+    setIsSliding(true)
+    setSelectedEntryId(entryId)
+  }
+
+  const handleBackClick = () => {
+    setSlideDirection('out')
+    setTimeout(() => {
+      setSelectedEntryId(null)
+      setIsSliding(false)
+    }, 500)
+  }
+
   // --- STYLE COMPONENT ---
   const Style = () => (
     <style>{`
@@ -71,118 +90,196 @@ export default function Home() {
     
     body, #__next {
         font-family: 'Poppins', sans-serif;
-        background-color: #f8fafc; /* slate-50 */
-        color: #1f2937; /* gray-800 */
+        background-color: #ffffff;
+        color: #1f2937;
         overflow-x: hidden;
     }
 
-    /* Neutral background shapes */
+
+
+    /* Green background shapes (when no custom background) */
     .background-shape {
         position: fixed;
         border-radius: 50%;
-        filter: blur(180px);
-        opacity: 0.6;
-        z-index: -1;
+        filter: blur(200px);
+        opacity: 0.3;
+        z-index: 0;
     }
     .shape1 {
-        width: 400px;
-        height: 400px;
-        background: rgba(100, 116, 139, 0.15); /* slate-500 */
-        top: -100px;
-        left: -100px;
+        width: 500px;
+        height: 500px;
+        background: rgba(2, 48, 32, 0.4);
+        top: -150px;
+        left: -150px;
     }
     .shape2 {
+        width: 400px;
+        height: 400px;
+        background: rgba(2, 48, 32, 0.3);
+        bottom: -100px;
+        right: -100px;
+    }
+    .shape3 {
         width: 350px;
         height: 350px;
-        background: rgba(100, 116, 139, 0.1); /* slate-500 */
-        bottom: -150px;
-        right: -50px;
+        background: rgba(2, 48, 32, 0.25);
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
     }
 
-    /* Base glass effect for nav and modal */
-    .neutral-glass {
-        background: rgba(255, 255, 255, 0.65);
-        backdrop-filter: blur(30px);
-        -webkit-backdrop-filter: blur(30px);
-        border: 1px solid rgba(255, 255, 255, 0.8);
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+    /* Glass effect */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        box-shadow: 0 8px 32px 0 rgba(2, 48, 32, 0.1);
+        transition: all 0.3s ease;
     }
     
-    /* Enhanced glass effect for journal cards with hover state */
-    .journal-glass-card {
-        background: rgba(255, 255, 255, 0.45); /* More transparent initially */
-        backdrop-filter: blur(10px); /* Stronger blur */
-        -webkit-backdrop-filter: blur(40px);
-        border: 1px solid rgba(255, 255, 255, 0.6);
-        box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.05);
-        transition: background 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    .glass-card:hover {
+        background: rgba(255, 255, 255, 0.85);
+        box-shadow: 0 8px 32px 0 rgba(2, 48, 32, 0.15);
     }
-    .journal-glass-card:hover {
-        background: rgba(255, 255, 255, 0.7); /* Less transparent on hover */
-        border-color: rgba(255, 255, 255, 1);
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+    
+    /* Glossy navbar */
+    .glossy-nav {
+        background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.95) 0%,
+            rgba(255, 255, 255, 0.85) 50%,
+            rgba(255, 255, 255, 0.95) 100%);
+        backdrop-filter: blur(40px) saturate(180%);
+        -webkit-backdrop-filter: blur(40px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 1);
+        box-shadow: 
+            0 8px 32px 0 rgba(2, 48, 32, 0.15),
+            0 2px 8px 0 rgba(255, 255, 255, 0.8) inset,
+            0 -2px 8px 0 rgba(2, 48, 32, 0.05) inset;
     }
 
-    /* Neutral button styles */
+    /* Very transparent entry cards */
+    .entry-glass {
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        box-shadow: 0 4px 16px 0 rgba(2, 48, 32, 0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .entry-glass:hover {
+        background: rgba(255, 255, 255, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        box-shadow: 0 8px 32px 0 rgba(2, 48, 32, 0.15);
+        transform: translateY(-2px);
+    }
+    
+    .entry-glass-selected {
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(2, 48, 32, 0.3);
+        box-shadow: 0 8px 32px 0 rgba(2, 48, 32, 0.2);
+    }
+
+    .glass-button {
+        background: rgba(255, 255, 255, 0.5);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        transition: all 0.3s ease;
+    }
+    
+    .glass-button:hover {
+        background: rgba(255, 255, 255, 0.75);
+        border-color: rgba(2, 48, 32, 0.3);
+    }
+    
+    .glass-button-active {
+        background: rgba(2, 48, 32, 0.2);
+        border-color: rgba(2, 48, 32, 0.4);
+        font-weight: 600;
+    }
+
     .primary-button {
-        background-color: #1e293b; /* slate-800 */
+        background: linear-gradient(135deg, #023020 0%, #034d33 100%);
         color: white;
-        transition: all 0.2s ease-in-out;
+        transition: all 0.3s ease;
         font-weight: 500;
+        border: 1px solid rgba(255, 255, 255, 0.2);
     }
     .primary-button:hover {
-        background-color: #0f172a; /* slate-900 */
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(15, 23, 42, 0.2);
+        box-shadow: 0 8px 24px rgba(2, 48, 32, 0.3);
     }
     .primary-button:disabled {
-        background-color: #a1a1aa; /* zinc-400 */
-    }
-    
-    .nav-button {
-        background: transparent;
-        transition: all 0.3s ease;
-        color: #64748b; /* slate-500 */
-        font-weight: 500;
-        border-radius: 9999px;
-    }
-    .nav-button:hover {
-        background: rgba(15, 23, 42, 0.05); /* slate-900 */
-        color: #0f172a;
-    }
-    .nav-button-active {
-        background: rgba(15, 23, 42, 0.1);
-        color: #0f172a;
-        font-weight: 600;
-        border-radius: 9999px;
-    }
-    .signout-button {
-        background: rgba(241, 245, 249, 0.7); /* slate-100 */
-        color: #475569; /* slate-600 */
-    }
-    .signout-button:hover {
-        background: rgba(226, 232, 240, 0.9); /* slate-200 */
-        color: #1e293b; /* slate-800 */
+        background: rgba(156, 163, 175, 0.5);
+        cursor: not-allowed;
     }
 
     .styled-input, .styled-textarea {
-        background-color: rgba(241, 245, 249, 0.8);
-        border: 1px solid #cbd5e1;
-        color: #1e293b;
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(2, 48, 32, 0.2);
+        color: #023020;
+        backdrop-filter: blur(10px);
     }
     .styled-input:focus, .styled-textarea:focus {
         outline: none;
-        box-shadow: 0 0 0 2px #1e293b;
-        border-color: #1e293b;
+        box-shadow: 0 0 0 2px rgba(2, 48, 32, 0.3);
+        border-color: #023020;
+        background: rgba(255, 255, 255, 0.95);
     }
 
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(15px); }
         to { opacity: 1; transform: translateY(0); }
     }
-    .stardate-card {
-        animation: fadeIn 0.5s ease-out forwards;
+    .entry-card {
+        // animation: fadeIn 0.4s ease-out forwards;
     }
+    
+    @keyframes slideInRight {
+        from { 
+            opacity: 0;
+            transform: translateX(100%);
+        }
+        to { 
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    @keyframes slideOutRight {
+        from { 
+            opacity: 1;
+            transform: translateX(0);
+        }
+        to { 
+            opacity: 0;
+            transform: translateX(100%);
+        }
+    }
+    
+    .slide-in {
+        animation: slideInRight 0.4s ease-out forwards;
+    }
+    
+    .slide-out {
+        animation: slideOutRight 0.5s ease-in-out forwards;
+    }
+    
+    .list-expand {
+        transition: width 0.5s ease-in-out, max-width 0.5s ease-in-out;
+    }
+
+    .split-divider {
+        width: 1px;
+        background: linear-gradient(to bottom, 
+            rgba(2, 48, 32, 0) 0%,
+            rgba(2, 48, 32, 0.2) 50%,
+            rgba(2, 48, 32, 0) 100%
+        );
+    }
+
 `}</style>
   );
 
@@ -191,10 +288,12 @@ export default function Home() {
     return (
       <>
         <Style />
-        <div className="min-h-screen w-full flex items-center justify-center p-4 bg-gray-50">
-          <div className="w-full max-w-md p-8 space-y-6 rounded-2xl glass-container">
-            <h1 className="text-4xl font-bold text-center text-[#002c13]">Stardate</h1>
-            <p className="text-center text-gray-500">Log your journey, one entry at a time.</p>
+        <div className="min-h-screen w-full flex items-center justify-center p-4">
+          <div className="background-shape shape1"></div>
+          <div className="background-shape shape2"></div>
+          <div className="w-full max-w-md p-8 space-y-6 rounded-2xl glass-card relative z-10">
+            <h1 className="text-4xl font-bold text-center" style={{ color: '#023020' }}>Stardate</h1>
+            <p className="text-center text-gray-600">Log your journey, one entry at a time.</p>
             <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 rounded-lg styled-input" />
             <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-lg styled-input" />
             <div className="flex flex-col sm:flex-row gap-4 pt-2">
@@ -211,48 +310,103 @@ export default function Home() {
   return (
     <>
       <Style />
-      <div className="relative min-h-screen w-full p-4 sm:p-6">
+      <div className="relative min-h-screen w-full">
         <div className="background-shape shape1"></div>
         <div className="background-shape shape2"></div>
+        <div className="background-shape shape3"></div>
 
-        {/* Header with Centered Navigation and Sign Out */}
-        <header className="sticky top-4 z-50 max-w-5xl mx-auto mb-10">
-          <div className="p-2 flex justify-between items-center rounded-full neutral-glass">
-            {/* Left spacer to balance the signout button */}
-            <div className="w-10 h-10"></div>
-
-            {/* Centered Navigation Tabs */}
-            <nav className="flex-shrink-0 flex justify-center items-center gap-2">
-              {['Personal Logs', 'Officers Logs', 'Tasks'].map(tab => (
-                <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 sm:px-6 py-2 text-sm ${activeTab === tab ? 'nav-button-active' : 'nav-button'}`}>
-                  {tab}
-                </button>
-              ))}
-            </nav>
+        {/* Top Navigation Bar */}
+        <header className="fixed top-0 left-0 right-0 z-50 p-4">
+          <div className="max-w-max mx-auto flex items-center gap-2 px-2 py-2 rounded-full glossy-nav">
+            {/* Navigation Tabs */}
+            {['Personal Logs', 'Officers Logs', 'Tasks'].map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${activeTab === tab ? 'glass-button-active' : 'glass-button'
+                  }`}
+                style={{ color: activeTab === tab ? '#023020' : '#4b5563' }}
+              >
+                {tab}
+              </button>
+            ))}
 
             {/* Sign Out Button */}
-            <button onClick={handleSignOut} title="Sign Out" className="w-10 h-10 flex items-center justify-center rounded-full signout-button transition-all">
-              <FaSignOutAlt size={16} />
+            <button
+              onClick={handleSignOut}
+              className="px-4 py-2 rounded-full text-sm font-medium glass-button transition-all"
+              style={{ color: '#4b5563' }}
+            >
+              Sign Out
             </button>
           </div>
-
         </header>
 
-        <main className="max-w-3xl mx-auto z-10 pb-28">
-          <div className="space-y-5">
-            {entries?.map((entry, index) => (
-              <div key={entry.id} className="stardate-card" style={{ animationDelay: `${index * 100}ms` }}>
-                <Link href={`/stardate/${entry.id}`} className="block p-6 rounded-2xl journal-glass-card group">
-                  <h3 className="text-base font-semibold text-slate-800 mb-1.5">{formatStardate(entry.createdAt)}</h3>
-                  <h4 className="text-xl font-bold text-slate-900 mb-2">{entry.title}</h4>
-                  <p className="text-slate-600 text-sm leading-relaxed line-clamp-2">
-                    {entry.content}
-                  </p>
-                </Link>
-              </div>
-            ))}
+        {/* Main Content Area */}
+        <div className="flex h-screen pt-24">
+          {/* Left Side - Entry List */}
+          <div className={`${selectedEntryId ? 'w-1/2' : 'w-full max-w-xl mx-auto'} list-expand overflow-y-auto p-6 pb-28`}>
+            <div className="space-y-3 relative z-10">
+              {entries?.map((entry, index) => (
+                <div
+                  key={entry.id}
+                  className="entry-card"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <button
+                    onClick={() => handleEntryClick(entry.id)}
+                    className={`w-full text-left px-6 py-4 rounded-full transition-all ${selectedEntryId === entry.id ? 'entry-glass-selected' : 'entry-glass'
+                      }`}
+                  >
+                    <h3 className="text-base font-semibold" style={{ color: '#023020' }}>
+                      {formatStardate(entry.createdAt)}
+                    </h3>
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
-        </main>
+
+          {/* Divider */}
+          {selectedEntryId && <div className="split-divider" style={{ opacity: slideDirection === 'out' ? 0 : 1, transition: 'opacity 0.5s' }}></div>}
+
+          {/* Right Side - Expanded Entry View */}
+          {selectedEntryId && selectedEntry && (
+            <div className={`w-1/2 overflow-y-auto p-6 pb-28 relative z-10 ${slideDirection === 'in' ? 'slide-in' : 'slide-out'}`}>
+              <div className="max-w-2xl mx-auto">
+                <button
+                  onClick={handleBackClick}
+                  className="mb-6 px-4 py-2 rounded-lg glass-button text-sm font-medium"
+                  style={{ color: '#023020' }}
+                >
+                  ← Back to List
+                </button>
+
+                <div className="glass-card p-8 rounded-2xl">
+                  <h2 className="text-2xl font-bold mb-2" style={{ color: '#023020' }}>
+                    {formatStardate(selectedEntry.createdAt)}
+                  </h2>
+                  <h3 className="text-3xl font-bold text-gray-800 mb-6">
+                    {selectedEntry.title}
+                  </h3>
+                  <div className="prose prose-lg">
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                      {selectedEntry.content}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Floating Action Button */}
+        {/* <button */}
+        {/*   onClick={() => setIsModalOpen(true)} */}
+        {/*   className="fixed bottom-8 right-8 w-16 h-16 flex items-center justify-center rounded-full primary-button cursor-pointer z-50 shadow-xl" */}
+        {/* > */}
+        {/*   <FaMicrophone size={24} /> */}
+        {/* </button> */}
 
         {/* Centered Floating Action Button */}
         <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
@@ -260,20 +414,51 @@ export default function Home() {
         </div>
 
         {/* New Entry Modal */}
-        {isModalOpen && (
-          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-[100]" onClick={() => setIsModalOpen(false)}>
-            <div className="w-full max-w-lg p-6 rounded-2xl neutral-glass relative" onClick={(e) => e.stopPropagation()}>
-              <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800"><FaTimes size={20} /></button>
-              <h2 className="text-2xl font-semibold mb-4 text-slate-800">New Stardate Entry</h2>
-              <input type="text" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-4 py-2 mb-3 rounded-lg styled-input" />
-              <textarea placeholder="Write your thoughts..." value={content} onChange={(e) => setContent(e.target.value)} rows={5} className="w-full px-4 py-2 mb-4 rounded-lg styled-textarea" />
-              <button onClick={() => createEntry.mutate({ title, content })} disabled={!title || !content} className="w-full py-3 rounded-lg primary-button">
-                Create Entry
-              </button>
+        {
+          isModalOpen && (
+            <div
+              className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-[100]"
+              onClick={() => setIsModalOpen(false)}
+            >
+              <div
+                className="w-full max-w-lg p-6 rounded-2xl glass-card relative"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-800"
+                >
+                  <FaTimes size={20} />
+                </button>
+                <h2 className="text-2xl font-semibold mb-4" style={{ color: '#023020' }}>
+                  New Stardate Entry
+                </h2>
+                <input
+                  type="text"
+                  placeholder="Title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full px-4 py-3 mb-3 rounded-lg styled-input"
+                />
+                <textarea
+                  placeholder="Write your thoughts..."
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  rows={6}
+                  className="w-full px-4 py-3 mb-4 rounded-lg styled-textarea"
+                />
+                <button
+                  onClick={() => createEntry.mutate({ title, content })}
+                  disabled={!title || !content}
+                  className="w-full py-3 rounded-lg primary-button"
+                >
+                  Create Entry
+                </button>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )
+        }
+      </div >
     </>
   )
 }
