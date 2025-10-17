@@ -1,6 +1,6 @@
 'use client'
 import { api } from '@/lib/trpc/client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { FaMicrophone, FaTimes, FaSignOutAlt } from 'react-icons/fa'
 import Link from 'next/link'
@@ -13,7 +13,6 @@ export default function Home() {
   const [content, setContent] = useState('')
   const [activeTab, setActiveTab] = useState('Personal Logs')
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [transcription, setTranscription] = useState('')
   const [isRecording, setIsRecording] = useState(false)
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
   const [isSliding, setIsSliding] = useState(false)
@@ -83,6 +82,12 @@ export default function Home() {
       setIsSliding(false)
     }, 500)
   }
+
+  useEffect(() => {
+    if (!isRecording) {
+      utils.journal.list.invalidate()
+    }
+  }, [isRecording])
 
   // --- STYLE COMPONENT ---
   const Style = () => (
@@ -323,7 +328,7 @@ export default function Home() {
             <Link href="/">
               <button
                 className="px-4 py-2 rounded-full text-sm font-medium glass-button-active transition-all"
-                style={{color: '#023020'}}
+                style={{ color: '#023020' }}
               >
                 Personal Logs
               </button>
@@ -331,7 +336,7 @@ export default function Home() {
             <Link href="/officers-log">
               <button
                 className="px-4 py-2 rounded-full text-sm font-medium glass-button transition-all"
-                style={{color: '#4b5563'}}
+                style={{ color: '#4b5563' }}
               >
                 Officers Logs
               </button>
@@ -339,7 +344,7 @@ export default function Home() {
             <Link href="/tasks">
               <button
                 className="px-4 py-2 rounded-full text-sm font-medium glass-button transition-all"
-                style={{color: '#4b5563'}}
+                style={{ color: '#4b5563' }}
               >
                 Tasks
               </button>
@@ -424,7 +429,7 @@ export default function Home() {
 
         {/* Centered Floating Action Button */}
         <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
-          <AudioRecorder setTranscription={setTranscription} setIsRecording={setIsRecording} />
+          <AudioRecorder setIsRecording={setIsRecording} />
         </div>
 
         {/* New Entry Modal */}

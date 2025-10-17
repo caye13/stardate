@@ -38,6 +38,15 @@ export const audioRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+
+      const entry = await ctx.prisma.journalEntry.create({
+        data: {
+          title: '',
+          content: 'Processing...',
+          userId: ctx.userId,
+        }
+      })
+
       // Decode base64 to buffer
       const buffer = Buffer.from(input.audioData, 'base64')
 
@@ -47,6 +56,11 @@ export const audioRouter = router({
       // Start transcription
       const transcript = await client.transcripts.transcribe({
         audio: uploadUrl,
+      })
+
+      await ctx.prisma.journalEntry.update({
+        where: { id: entry.id },
+        data: { content: transcript.text || "No audio detected." }
       })
 
       return {

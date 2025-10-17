@@ -4,11 +4,10 @@ import { useState, useRef, useEffect } from 'react'
 import { api } from '@/lib/trpc/client'
 
 interface AudioRecorderProps {
-  setTranscription: React.Dispatch<React.SetStateAction<string>>
   setIsRecording: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-export default function AudioRecorder({ setTranscription, setIsRecording: setExternalIsRecording }: AudioRecorderProps) {
+export default function AudioRecorder({ setIsRecording: setExternalIsRecording }: AudioRecorderProps) {
   const [isRecording, setIsRecording] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [audioLevels, setAudioLevels] = useState<number[]>(new Array(20).fill(0))
@@ -28,8 +27,6 @@ export default function AudioRecorder({ setTranscription, setIsRecording: setExt
       const newText = data.text
       setInternalTranscription(prev => prev + (prev ? ' ' : '') + newText)
 
-      // Update parent component's transcription
-      setTranscription(prev => prev + (prev ? ' ' : '') + newText)
 
       // Set external recording state to false when done
       setExternalIsRecording(false)
@@ -173,7 +170,7 @@ export default function AudioRecorder({ setTranscription, setIsRecording: setExt
       <button
         disabled={!isRecording}
         onClick={isPaused ? resumeRecording : pauseRecording}
-        className={`text-white overflow-hidden transition-all duration-500 ease-in-out ${isRecording ? 'w-full' : 'w-0'} hover:text-gray-300 h-8 flex items-center justify-center`}
+        className={`text-white overflow-hidden transition-all duration-500 ease-in-out ${isRecording ? 'cursor-pointer w-full' : 'w-0 opacity-0'} hover:text-gray-300 h-8 flex items-center justify-center`}
       >
         {isPaused ? '▶️' : '⏸️'}
       </button>
@@ -192,7 +189,7 @@ export default function AudioRecorder({ setTranscription, setIsRecording: setExt
       <button
         disabled={!isRecording}
         onClick={stopRecording}
-        className={`text-white overflow-hidden transition-all duration-500 ease-in-out ${isRecording ? 'w-full' : 'w-0'} hover:text-gray-300 h-8 flex items-center justify-center`}
+        className={`text-white overflow-hidden transition-all duration-500 ease-in-out ${isRecording ? 'cursor-pointer w-full' : 'w-0 opacity-0'} hover:text-gray-300 h-8 flex items-center justify-center`}
       >
         ⏹️
       </button>
