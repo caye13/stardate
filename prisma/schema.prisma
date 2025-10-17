@@ -41,3 +41,27 @@ model OfficerEntry {
 
   @@index([userId])
 }
+
+model AnalysisReport {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  rawOutput String   @db.Text // Store the full raw JSON response from Claude
+
+  // This creates the one-to-many relationship
+  orders ImprovementOrder[]
+}
+
+model ImprovementOrder {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  department  String
+  severity    String // "low", "medium", "high", "critical"
+  description String   @db.Text
+  status      String   @default("pending") // e.g., "pending", "in-progress", "completed"
+
+  // Foreign key to link back to the analysis report
+  reportId       String
+  analysisReport AnalysisReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+}
