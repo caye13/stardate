@@ -13,6 +13,8 @@ export default function Home() {
   const [content, setContent] = useState('')
   const [activeTab, setActiveTab] = useState('Stardates')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [transcription, setTranscription] = useState('')
+  const [isRecording, setIsRecording] = useState(false)
 
   const supabase = createClient()
   const utils = api.useUtils()
@@ -254,7 +256,7 @@ export default function Home() {
 
         {/* Centered Floating Action Button */}
         <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
-          <AudioRecorder />
+          <AudioRecorder setTranscription={setTranscription} setIsRecording={setIsRecording} />
         </div>
 
         {/* New Entry Modal */}
