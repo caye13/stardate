@@ -3,18 +3,29 @@ import { api } from '@/lib/trpc/client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { FaMicrophone, FaTimes, FaSignOutAlt } from 'react-icons/fa'
+import AudioRecorder from '@/components/AudioRecorder'
+import { useRouter } from 'next/router'
+
+
 
 import Link from 'next/link'
 
-export default function Home() {
+const departments = ['Engineering', 'Medical', 'Operations', 'Security', 'Command', 'Sciences']
+
+
+export default function OfficersLog() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
+  const [department, setDepartment] = useState(departments[0])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
   const [isSliding, setIsSliding] = useState(false)
   const [slideDirection, setSlideDirection] = useState<'in' | 'out'>('in')
+  const [transcription, setTranscription] = useState('')
+  const [isRecording, setIsRecording] = useState(false)
+  const [activeTab, setActiveTab] = useState('officers-log')
 
 
   const supabase = createClient()
@@ -28,21 +39,21 @@ export default function Home() {
     },
   })
 
-  const { data: entries } = api.journal.list.useQuery(undefined, {
+  const { data: entries } = api.officer.list.useQuery(undefined, {
     enabled: !!userData?.user,
   })
 
-  const createEntry = api.journal.create.useMutation({
+  const createEntry = api.officer.create.useMutation({
     onSuccess: () => {
-      utils.journal.list.invalidate()
+      utils.officer.list.invalidate()
       setTitle('')
       setContent('')
       setIsModalOpen(false)
     },
   })
 
-  const deleteEntry = api.journal.delete.useMutation({
-    onSuccess: () => utils.journal.list.invalidate(),
+  const deleteEntry = api.officer.delete.useMutation({
+    onSuccess: () => utils.officer.list.invalidate(),
   })
 
   const handleSignIn = async () => {
@@ -318,38 +329,65 @@ const Style = () => (
           <div className="max-w-max mx-auto flex items-center gap-2 px-2 py-2 rounded-full glossy-nav">
             {/* Navigation Tabs */}
             <Link href="/">
-              <button
-                className="px-4 py-2 rounded-full text-sm font-medium glass-button-active transition-all"
-                style={{color: '#023020'}}
-              >
-                Personal Logs
-              </button>
-            </Link>
-            <Link href="/officers-log">
-              <button
-                className="px-4 py-2 rounded-full text-sm font-medium glass-button transition-all"
-                style={{color: '#4b5563'}}
-              >
-                Officers Logs
-              </button>
-            </Link>
-            <Link href="/tasks">
-              <button
-                className="px-4 py-2 rounded-full text-sm font-medium glass-button transition-all"
-                style={{color: '#4b5563'}}
-              >
-                Tasks
-              </button>
-            </Link>
+                <button
+                  className={`px-4 py-2 rounded-full text-sm font-medium glass-button transition-all ${
+                    activeTab === 'personal-logs' ? 'glass-button-active' : ''
+                  }`}
+                  style={{color: activeTab === 'personal-logs' ? '#023020' : '#4b5563'}}
+                  onClick={() => setActiveTab('personal-logs')}
+                >
+                  Personal Logs
+                </button>
+              </Link>
+              <Link href="/officers-log">
+                <button
+                  className={`px-4 py-2 rounded-full text-sm font-medium glass-button transition-all ${
+                    activeTab === 'officers-log' ? 'glass-button-active' : ''
+                  }`}
+                  style={{color: activeTab === 'officers-log' ? '#023020' : '#4b5563'}}
+                  onClick={() => setActiveTab('officers-log')}
+                >
+                  Officers Logs
+                </button>
+              </Link>
+              <Link href="/tasks">
+                <button
+                  className={`px-4 py-2 rounded-full text-sm font-medium glass-button transition-all ${
+                    activeTab === 'tasks' ? 'glass-button-active' : ''
+                  }`}
+                  style={{color: activeTab === 'tasks' ? '#023020' : '#4b5563'}}
+                  onClick={() => setActiveTab('tasks')}
+                >
+                  Tasks
+                </button>
+              </Link>
 
             {/* Sign Out Button */}
             <button
               onClick={handleSignOut}
               className="px-4 py-2 rounded-full text-sm font-medium glass-button transition-all"
-              style={{color: '#4b5563'}}
+              style={{color: '#4f634b'}}
             >
               Sign Out
             </button>
+            {/* Department Dropdown */}
+            <div className="relative">
+              <select
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+                className="px-4 py-2 rounded-full text-sm font-medium glass-button transition-all appearance-none pr-8"
+                style={{color: '#4f634b'}}
+              >
+                {departments.map((dept) => (
+                  <option key={dept} value={dept}>
+                    {dept}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+              </div>
+            </div>
           </div>
         </header>
 
@@ -413,12 +451,12 @@ const Style = () => (
         </div>
 
         {/* Floating Action Button */}
-        <button
+        {/* <button
           onClick={() => setIsModalOpen(true)}
           className="fixed bottom-8 right-8 w-16 h-16 flex items-center justify-center rounded-full primary-button cursor-pointer z-50 shadow-xl"
         >
           <FaMicrophone size={24} />
-        </button>
+        </button> */}
 
         {/* New Entry Modal */}
         {isModalOpen && (
@@ -460,9 +498,13 @@ const Style = () => (
               >
                 Create Entry
               </button>
+              
             </div>
           </div>
         )}
+      </div>
+      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
+                <AudioRecorder setTranscription={setTranscription} setIsRecording={setIsRecording} />
       </div>
     </>
   )
