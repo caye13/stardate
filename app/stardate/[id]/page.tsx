@@ -3,6 +3,7 @@
 
 import { api } from '@/lib/trpc/client'
 import Link from 'next/link'
+import { use } from 'react'
 import { FaArrowLeft } from 'react-icons/fa'
 
 // Helper to format the date
@@ -14,8 +15,8 @@ const formatStardate = (date: Date) => {
   return `${year}.${month}.${day} // ${time}`
 }
 
-export default function StardateDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params
+export default function StardateDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   const { data: entry, isLoading } = api.journal.getById.useQuery({ id })
 
   // Style component with the new green glass theme and darker text
@@ -76,21 +77,21 @@ export default function StardateDetailPage({ params }: { params: { id: string } 
 
   if (isLoading) {
     return (
-        <div className="min-h-screen flex items-center justify-center text-[#002c13]">
-            <p className="animate-pulse">Loading Stardate...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center text-[#002c13]">
+        <p className="animate-pulse">Loading Stardate...</p>
+      </div>
     )
   }
 
   if (!entry) {
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center text-[#002c13]">
-            <p className="text-xl mb-4">Stardate entry not found.</p>
-            <Link href="/" className="flex items-center gap-2 px-4 py-2 bg-[#002c13] text-white rounded-lg hover:opacity-90 transition-opacity">
-                <FaArrowLeft />
-                Return to Log
-            </Link>
-        </div>
+      <div className="min-h-screen flex flex-col items-center justify-center text-[#002c13]">
+        <p className="text-xl mb-4">Stardate entry not found.</p>
+        <Link href="/" className="flex items-center gap-2 px-4 py-2 bg-[#002c13] text-white rounded-lg hover:opacity-90 transition-opacity">
+          <FaArrowLeft />
+          Return to Log
+        </Link>
+      </div>
     )
   }
 
@@ -102,23 +103,23 @@ export default function StardateDetailPage({ params }: { params: { id: string } 
 
       <main className="min-h-screen font-sans p-4 sm:p-8 relative z-10">
         <div className="max-w-3xl mx-auto">
-            <div className="mb-8">
-                <Link href="/" className="inline-flex items-center gap-2.5 text-gray-500 hover:text-[#002c13] transition-colors group">
-                    <div className="bg-white/50 group-hover:bg-white transition-colors border border-gray-200/80 rounded-full p-2">
-                      <FaArrowLeft size={12} />
-                    </div>
-                    <span className="font-medium">Back to all Stardates</span>
-                </Link>
+          <div className="mb-8">
+            <Link href="/" className="inline-flex items-center gap-2.5 text-gray-500 hover:text-[#002c13] transition-colors group">
+              <div className="bg-white/50 group-hover:bg-white transition-colors border border-gray-200/80 rounded-full p-2">
+                <FaArrowLeft size={12} />
+              </div>
+              <span className="font-medium">Back to all Stardates</span>
+            </Link>
+          </div>
+
+          {/* The main card now uses the new green-glass-card style */}
+          <div className="green-glass-card rounded-2xl p-6 sm:p-10">
+            <p className="text-lg font-semibold text-[#002c13] mb-2">{formatStardate(entry.createdAt)}</p>
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-8">{entry.title}</h1>
+            <div className="prose prose-lg max-w-none leading-relaxed">
+              <p style={{ whiteSpace: 'pre-wrap' }}>{entry.content}</p>
             </div>
-          
-            {/* The main card now uses the new green-glass-card style */}
-            <div className="green-glass-card rounded-2xl p-6 sm:p-10">
-                <p className="text-lg font-semibold text-[#002c13] mb-2">{formatStardate(entry.createdAt)}</p>
-                <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-8">{entry.title}</h1>
-                <div className="prose prose-lg max-w-none leading-relaxed">
-                    <p style={{ whiteSpace: 'pre-wrap' }}>{entry.content}</p>
-                </div>
-            </div>
+          </div>
         </div>
       </main>
     </>

@@ -256,6 +256,7 @@ export default function Home() {
         <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
           <AudioRecorder />
         </div>
+
         {/* New Entry Modal */}
         {isModalOpen && (
           <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-[100]" onClick={() => setIsModalOpen(false)}>

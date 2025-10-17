@@ -163,13 +163,13 @@ export default function AudioRecorder() {
   }
 
   return (
-    <div className="flex items-center bg-white/5 backdrop-blur-xs px-3 py-3 min-w-8 min-h-8 rounded-full transition-all border border-gray-500/26 shadow-md shadow-gray-800/50">
+    <div
+      onClick={!isRecording ? toggleRecordingOn : () => { }}
+      className={`flex items-center bg-white/5 backdrop-blur-xs px-3 py-3 ${!isRecording ? 'cursor-pointer items-center justify-center w-14 h-14' : 'min-w-8 min-h-8'} rounded-full transition-all border border-gray-500/26 shadow-md shadow-gray-800/50`}>
       {!isRecording && (
-        <span className="w-full h-full" onClick={toggleRecordingOn}>🎙️</span>
+        <span className="" onClick={toggleRecordingOn}>🎙️</span>
       )}
       <button
-        disabled={!isRecording}
-        onClick={isPaused ? resumeRecording : pauseRecording}
         className={`text-white overflow-hidden transition-all duration-500 ease-in-out ${isRecording ? 'w-full' : 'w-0'} hover:text-gray-300 h-8 flex items-center justify-center`}
       >
         {isPaused ? '▶️' : '⏸️'}
@@ -178,7 +178,7 @@ export default function AudioRecorder() {
         {audioLevels.map((level, i) => (
           <div
             key={i}
-            className="w-1 bg-red-500 rounded-full transition-all duration-100"
+            className="w-1 bg-gray-900 rounded-full transition-all duration-100"
             style={{
               height: `${Math.max(8, level * 32)}px`,
               opacity: isPaused ? 0.3 : 1,
