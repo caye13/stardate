@@ -2,6 +2,7 @@
 import { api } from '@/lib/trpc/client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import AudioRecorder from '@/components/AudioRecorder'
 import Link from 'next/link'
 import { FaMicrophone, FaTimes, FaSignOutAlt } from 'react-icons/fa'
 
@@ -51,7 +52,7 @@ export default function Home() {
     await supabase.auth.signOut()
     utils.auth.getUser.invalidate()
   }
-  
+
   const formatStardate = (dateString: string | Date) => {
     const date = new Date(dateString)
     const year = date.getFullYear()
@@ -61,9 +62,9 @@ export default function Home() {
     return `${year}.${month}.${day} // ${time}`
   }
 
-// --- STYLE COMPONENT ---
-const Style = () => (
-<style>{`
+  // --- STYLE COMPONENT ---
+  const Style = () => (
+    <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
     
     body, #__next {
@@ -181,7 +182,7 @@ const Style = () => (
         animation: fadeIn 0.5s ease-out forwards;
     }
 `}</style>
-);
+  );
 
   // --- LOGIN/SIGNUP VIEW ---
   if (!userData?.user) {
@@ -189,90 +190,88 @@ const Style = () => (
       <>
         <Style />
         <div className="min-h-screen w-full flex items-center justify-center p-4 bg-gray-50">
-            <div className="w-full max-w-md p-8 space-y-6 rounded-2xl glass-container">
-                <h1 className="text-4xl font-bold text-center text-[#002c13]">Stardate</h1>
-                <p className="text-center text-gray-500">Log your journey, one entry at a time.</p>
-                <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 rounded-lg styled-input"/>
-                <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-lg styled-input"/>
-                <div className="flex flex-col sm:flex-row gap-4 pt-2">
-                    <button onClick={() => signUp.mutate({ email, password })} className="flex-1 py-3 rounded-lg primary-button">Sign Up</button>
-                    <button onClick={handleSignIn} className="flex-1 py-3 rounded-lg primary-button">Sign In</button>
-                </div>
+          <div className="w-full max-w-md p-8 space-y-6 rounded-2xl glass-container">
+            <h1 className="text-4xl font-bold text-center text-[#002c13]">Stardate</h1>
+            <p className="text-center text-gray-500">Log your journey, one entry at a time.</p>
+            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 rounded-lg styled-input" />
+            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-lg styled-input" />
+            <div className="flex flex-col sm:flex-row gap-4 pt-2">
+              <button onClick={() => signUp.mutate({ email, password })} className="flex-1 py-3 rounded-lg primary-button">Sign Up</button>
+              <button onClick={handleSignIn} className="flex-1 py-3 rounded-lg primary-button">Sign In</button>
             </div>
+          </div>
         </div>
       </>
     )
   }
 
   // --- MAIN LOGGED-IN VIEW ---
-return (
-<>
-    <Style />
-    <div className="relative min-h-screen w-full p-4 sm:p-6">
-    <div className="background-shape shape1"></div>
-    <div className="background-shape shape2"></div>
-    
-    {/* Header with Centered Navigation and Sign Out */}
-    <header className="sticky top-4 z-50 max-w-5xl mx-auto mb-10">
-        <div className="p-2 flex justify-between items-center rounded-full neutral-glass">
+  return (
+    <>
+      <Style />
+      <div className="relative min-h-screen w-full p-4 sm:p-6">
+        <div className="background-shape shape1"></div>
+        <div className="background-shape shape2"></div>
+
+        {/* Header with Centered Navigation and Sign Out */}
+        <header className="sticky top-4 z-50 max-w-5xl mx-auto mb-10">
+          <div className="p-2 flex justify-between items-center rounded-full neutral-glass">
             {/* Left spacer to balance the signout button */}
-            <div className="w-10 h-10"></div> 
+            <div className="w-10 h-10"></div>
 
             {/* Centered Navigation Tabs */}
             <nav className="flex-shrink-0 flex justify-center items-center gap-2">
-                {['Personal Logs', 'Officers Logs', 'Tasks'].map(tab => (
-                    <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 sm:px-6 py-2 text-sm ${activeTab === tab ? 'nav-button-active' : 'nav-button'}`}>
-                        {tab}
-                    </button>
-                ))}
+              {['Personal Logs', 'Officers Logs', 'Tasks'].map(tab => (
+                <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 sm:px-6 py-2 text-sm ${activeTab === tab ? 'nav-button-active' : 'nav-button'}`}>
+                  {tab}
+                </button>
+              ))}
             </nav>
 
             {/* Sign Out Button */}
             <button onClick={handleSignOut} title="Sign Out" className="w-10 h-10 flex items-center justify-center rounded-full signout-button transition-all">
-                <FaSignOutAlt size={16} />
+              <FaSignOutAlt size={16} />
             </button>
-        </div>
-    </header>
+          </div>
 
-    <main className="max-w-3xl mx-auto z-10 pb-28">
-        <div className="space-y-5">
+        </header>
+
+        <main className="max-w-3xl mx-auto z-10 pb-28">
+          <div className="space-y-5">
             {entries?.map((entry, index) => (
-            <div key={entry.id} className="stardate-card" style={{ animationDelay: `${index * 100}ms` }}>
+              <div key={entry.id} className="stardate-card" style={{ animationDelay: `${index * 100}ms` }}>
                 <Link href={`/stardate/${entry.id}`} className="block p-6 rounded-2xl journal-glass-card group">
-                    <h3 className="text-base font-semibold text-slate-800 mb-1.5">{formatStardate(entry.createdAt)}</h3>
-                    <h4 className="text-xl font-bold text-slate-900 mb-2">{entry.title}</h4>
-                    <p className="text-slate-600 text-sm leading-relaxed line-clamp-2">
-                        {entry.content}
-                    </p>
+                  <h3 className="text-base font-semibold text-slate-800 mb-1.5">{formatStardate(entry.createdAt)}</h3>
+                  <h4 className="text-xl font-bold text-slate-900 mb-2">{entry.title}</h4>
+                  <p className="text-slate-600 text-sm leading-relaxed line-clamp-2">
+                    {entry.content}
+                  </p>
                 </Link>
-            </div>
+              </div>
             ))}
-        </div>
-    </main>
-    
-    {/* Centered Floating Action Button */}
-    <div 
-        onClick={() => setIsModalOpen(true)} 
-        className="fixed bottom-6 left-1/2 -translate-x-1/2 w-16 h-16 flex items-center justify-center rounded-full primary-button cursor-pointer z-50 shadow-lg"
-    >
-        <FaMicrophone size={24} />
-    </div>
+          </div>
+        </main>
 
-    {/* New Entry Modal */}
-    {isModalOpen && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-[100]" onClick={() => setIsModalOpen(false)}>
-            <div className="w-full max-w-lg p-6 rounded-2xl neutral-glass relative" onClick={(e) => e.stopPropagation()}>
-                <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800"><FaTimes size={20} /></button>
-                <h2 className="text-2xl font-semibold mb-4 text-slate-800">New Stardate Entry</h2>
-                <input type="text" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-4 py-2 mb-3 rounded-lg styled-input" />
-                <textarea placeholder="Write your thoughts..." value={content} onChange={(e) => setContent(e.target.value)} rows={5} className="w-full px-4 py-2 mb-4 rounded-lg styled-textarea" />
-                <button onClick={() => createEntry.mutate({ title, content })} disabled={!title || !content} className="w-full py-3 rounded-lg primary-button">
-                    Create Entry
-                </button>
-            </div>
+        {/* Centered Floating Action Button */}
+        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
+          <AudioRecorder />
         </div>
-    )}
-    </div>
-</>
-)
+
+        {/* New Entry Modal */}
+        {isModalOpen && (
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-[100]" onClick={() => setIsModalOpen(false)}>
+            <div className="w-full max-w-lg p-6 rounded-2xl neutral-glass relative" onClick={(e) => e.stopPropagation()}>
+              <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800"><FaTimes size={20} /></button>
+              <h2 className="text-2xl font-semibold mb-4 text-slate-800">New Stardate Entry</h2>
+              <input type="text" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-4 py-2 mb-3 rounded-lg styled-input" />
+              <textarea placeholder="Write your thoughts..." value={content} onChange={(e) => setContent(e.target.value)} rows={5} className="w-full px-4 py-2 mb-4 rounded-lg styled-textarea" />
+              <button onClick={() => createEntry.mutate({ title, content })} disabled={!title || !content} className="w-full py-3 rounded-lg primary-button">
+                Create Entry
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  )
 }

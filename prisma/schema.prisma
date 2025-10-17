@@ -14,6 +14,7 @@ model User {
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   journalEntries JournalEntry[]
+  OfficerEntry   OfficerEntry[]
 }
 
 model JournalEntry {
@@ -24,6 +25,19 @@ model JournalEntry {
   updatedAt DateTime @updatedAt
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model OfficerEntry {
+  id         String   @id @default(uuid())
+  title      String
+  content    String
+  department String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
