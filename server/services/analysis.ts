@@ -28,13 +28,24 @@ export async function runKaizenAnalysisLogic(ctx: Context) {
     },
   });
 
+
   if (entries.length === 0) {
     console.log("No recent entries to analyze.");
     return;
   }
 
-  console.log(`Found ${entries.length} entries. Building prompt...`);
-  const prompt = buildKaizenPrompt(entries);
+  console.log("Fetching recent improvement orders to avoid duplication...");
+  const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+  const recentOrders = await ctx.prisma.improvementOrder.findMany({
+    where: {
+      createdAt: { gte: fourteenDaysAgo },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  // Pass both officer entries and recent orders to the prompt builder.
+  console.log(`Found ${entries.length} entries and ${recentOrders.length} recent orders. Building prompt...`);
+  const prompt = buildKaizenPrompt(entries, recentOrders);
 
   const response = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
